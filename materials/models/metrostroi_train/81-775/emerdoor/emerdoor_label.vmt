@@ -1,0 +1,8 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/emerdoor/emerdoor_label"
+	"$model" "1"
+	"$phong" "1"
+	"$phongexponent" "30"
+	"$phongboost" "0.3"
+}

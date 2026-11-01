@@ -1,0 +1,5 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/led_white"
+	"$color" "[0.12 0.12 0.12]"
+}

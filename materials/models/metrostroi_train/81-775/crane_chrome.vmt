@@ -1,0 +1,7 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/crane_chrome"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.75 0.75 0.75]"
+	"$surfaceprop" "metal"
+}

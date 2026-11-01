@@ -1,0 +1,13 @@
+"VertexLitGeneric"
+{
+	// ручки и защёлки шкафов кабины 81-775 (геометрия как у 81-765): чёрный пластик
+	"$basetexture" "models/metrostroi_train/81-775/775_cab_handle"
+	"$bumpmap" "models/metrostroi_train/81-775/775_cab_handle_n"
+	"$model" "1"
+	"$phong" "1"
+	"$basemapalphaphongmask" "1"
+	"$phongexponent" "25"
+	"$phongboost" "1"
+	"$phongfresnelranges" "[0.2 0.5 1]"
+	"$surfaceprop" "plastic"
+}

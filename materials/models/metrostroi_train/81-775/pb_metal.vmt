@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	// педаль бдительности и бортики подножки (81-775): чистая шлифованная сталь
+	"$basetexture" "models/metrostroi_train/81-775/pb_metal"
+	"$bumpmap" "models/metrostroi_train/81-775/pb_metal_n"
+	"$model" "1"
+	"$phong" "1"
+	"$basemapalphaphongmask" "1"
+	"$phongexponent" "40"
+	"$phongboost" "3"
+	"$phongfresnelranges" "[0.4 0.7 1]"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.15 0.15 0.16]"
+	"$surfaceprop" "metal"
+}

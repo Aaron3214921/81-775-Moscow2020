@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	// плафон кабины 81-775, светится: тёплый белый 3900 K (не зависит от освещения)
+	"$basetexture" "models/metrostroi_train/81-775/775_cablamp_on"
+	"$model" "1"
+}

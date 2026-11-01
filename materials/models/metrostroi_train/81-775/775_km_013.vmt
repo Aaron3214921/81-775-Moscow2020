@@ -1,0 +1,8 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_km_013"
+	"$bumpmap"		"models/metrostroi_train/81-775/pult_1_n"
+	"$alphatest" "1"
+	"$model" "1"
+	"$phong" "1"
+}

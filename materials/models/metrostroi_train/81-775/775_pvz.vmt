@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/metrostroi_train/81-775/775_pvz"
+	"$bumpmap"	"models/metrostroi_train/81-775/775_pvz_n"
+	"$model"	"1"
+	"$surfaceprop"	"metal"
+
+	// альфа диффуза = маска блеска (пластик ~120, металл 255, краска ~70)
+	"$phong"	"1"
+	"$basemapalphaphongmask"	"1"
+	"$phongexponent"	"30"
+	"$phongboost"	"1.3"
+	"$phongfresnelranges"	"[0.3 0.8 3]"
+}

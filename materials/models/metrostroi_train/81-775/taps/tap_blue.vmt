@@ -1,0 +1,13 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/debug/debugwhite"
+	"$color2" "{43 130 223}"
+	"$model" "1"
+	"$nocull" "1"
+	"$phong" "1"
+	"$phongboost" "4"
+	"$phongexponent" "40"
+	"$phongfresnelranges" "[0.3 1 4]"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.08 0.08 0.08]"
+}

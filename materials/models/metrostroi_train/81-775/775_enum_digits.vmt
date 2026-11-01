@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_enum_digits"
+	"$translucent" 1
+	"$vertexcolor" 1
+	"$vertexalpha" 1
+	"$nocull" 1
+}

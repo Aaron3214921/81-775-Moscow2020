@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/Lpult_lit"
+	"$alphatest" "1"
+	"$model" "1"
+	"$phong" "1"
+
+	"$selfillum" "1"
+	"$selfillummask" "models/metrostroi_train/81-775/Lpult_s020"
+	"$selfillumtint" "[7 7 7]"
+}

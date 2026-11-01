@@ -1,0 +1,20 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/controller"
+	"$model" 1
+
+	// Тёмный полуматовый (сатиновый) пластик
+	"$phong" "1"
+	"$phongexponent" "22"            // меньше = шире и мягче блик (пластик 15-40, глянец 80+)
+	"$phongboost" "1.6"              // сила блика
+	"$phongfresnelranges" "[0.5 1 3]" // блик сильнее на скользящих углах, как у пластика
+	"$phongalbedotint" "0"           // блик нейтральный, не окрашивается текстурой
+
+	// Слабое мягкое отражение окружения
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[0.04 0.04 0.04]"
+	"$envmapfresnel" "1"
+
+	// Смягчает переход света на тёмной поверхности
+	"$halflambert" "1"
+}

@@ -1,0 +1,13 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_emergv"
+	"$model" 1
+	"$phong" 1
+	"$phongexponent" 64
+	"$phongboost" 16
+	"$phongfresnelranges" "[0.1 0.1 0.1]"
+
+	"$selfillum" "1"
+	"$selfillummask" "models/metrostroi_train/81-775/775_emergv_illum"
+	"$selfillumtint" "[2.2 2.2 2.2]"
+}

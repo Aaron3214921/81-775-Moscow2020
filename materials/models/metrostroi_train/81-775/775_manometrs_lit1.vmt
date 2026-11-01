@@ -1,0 +1,12 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_manometrs"
+	"$bumpmap"		"models/metrostroi_train/81-775/775_manometrs_n"
+	"$alphatest" "1"
+	"$model" "1"
+	"$phong" "1"
+
+	"$selfillum" "1"
+	"$selfillummask" "models/metrostroi_train/81-775/775_manometrs_illum"
+	"$selfillumtint" "[0.55 0.37 0.13]"
+}

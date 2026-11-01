@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	// копия 775_body для внутренней чёрной рамки окна боковых дверей кабины: без блика (phong выключен)
+	"$basetexture"	"models/metrostroi_train/81-775/775_body"
+	"$bumpmap"	"models/metrostroi_train/81-775/775_body_n"
+	"$model"	"1"
+
+	"$envmap"	"env_cubemap"
+	"$normalmapalphaenvmapmask"	"1"
+	"$envmaptint"	"[1. 1. 1.]"
+	"$envmapfresnel"	"0.6"
+
+	"$surfaceprop"	"metal"
+}

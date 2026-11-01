@@ -1,0 +1,9 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_hnd"
+	"$model" 1
+	"$phong" 1
+	"$phongexponent" 30
+	"$phongboost" 1.5
+	"$phongfresnelranges" "[0.2 0.6 1]"
+}

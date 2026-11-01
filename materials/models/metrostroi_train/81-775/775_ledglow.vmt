@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models/metrostroi_train/81-775/775_ledglow"
+	"$model" 1
+	"$additive" 1
+	"$color" "[0 0 0]"
+	"$color2" "[0 0 0]"
+}
