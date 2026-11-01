@@ -98,6 +98,7 @@ function TRAIN_SYSTEM:Outputs()
 end
 
 local function C(x) return x and 1 or 0 end
+local function IsOn(v) return v == true or (type(v) == "number" and v > 0) end
 
 local TractionFade = {{0,1},{50,1},{60,0.94},{70,0.875},{80,0.81},{90,0.75},{100,0.69},{120,0.58}}
 local function TractionFadeAt(v)
@@ -309,7 +310,7 @@ function TRAIN_SYSTEM:Think(dT)
 		local command = 0
         if self.AsyncEmer > 0 then
             command = self.AsyncEmer*math.min(1,W[19]*0.5+W[18])
-            if Train:ReadTrainWire(67) > 0 or Train:ReadTrainWire(68) <= 0 or not Train.Pneumatic.ReserveReady then command = 0 end
+            if Train:ReadTrainWire(67) > 0 or Train:ReadTrainWire(68) <= 0 or not IsOn(Train.Pneumatic.ReserveReady) then command = 0 end
             Async:TriggerInput("Drive",C(command>0))
             Async:TriggerInput("Brake",0)
         else
