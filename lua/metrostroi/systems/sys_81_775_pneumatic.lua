@@ -89,7 +89,7 @@ end
 
 function TRAIN_SYSTEM:Outputs()
 	return { "BrakeLinePressure", "BrakeCylinderPressure", "DriverValvePosition","EmerBrakeWork",
-			 "ReservoirPressure", "TrainLinePressure", "DoorLinePressure", "WeightLoadRatio"}
+			 "ReservoirPressure", "TrainLinePressure", "DoorLinePressure", "WeightLoadRatio", "ReserveReady"}
 end
 
 function TRAIN_SYSTEM:TriggerInput(name,value)
