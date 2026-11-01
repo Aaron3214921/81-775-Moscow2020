@@ -2032,8 +2032,6 @@ ENT.Lights = {
 	[3] = {	"headlight",	Vector(530,0,55),	Angle(0,0,0),	Color(200,200,255),	farz = 10000,fov=120,	brightness = 2,		nearz = 100,texture = "models/metrostroi_train/equipment/headlight2",shadows = 1,headlight=true},
 	[4] = {	"headlight",	Vector(530,0,55),	Angle(-4,0,0),	Color(255,4,2),		farz = 320,	fov=170,	brightness = 0.18,	nearz = 100,texture = "models/metrostroi_train/equipment/headlight2",shadows = 1,backlight=true},
 
-	[40] = { "dynamiclight",Vector(402.3, 0, 38),Angle(0,0,0),Color(255,203,161),brightness = 0.84,distance = 450},
-	[41] = { "dynamiclight",Vector(432.5, 0, 42),Angle(0,0,0),Color(255,203,161),brightness = 0.56,distance = 400},
 }
 
 local NewMetrostroi = Metrostroi.Version >= 1623941696
@@ -2482,6 +2480,39 @@ function ENT:UpdateIntLight()
 
 end
 
+local CAB_DLIGHTS = {
+	{pos = Vector(402.3, 0, 38), col = Color(255,203,161), brightness = 0.84, size = 450},
+	{pos = Vector(432.5, 0, 42), col = Color(255,203,161), brightness = 0.56, size = 400},
+}
+function ENT:UpdateCabDLight(n, on)
+	self.CabDLightOn = self.CabDLightOn or {}
+	local key = 77500000 + self:EntIndex()*4 + n*2
+	if not on then
+		if self.CabDLightOn[n] then
+			self.CabDLightOn[n] = false
+			for i = 0, 1 do
+				local l = DynamicLight(key + i, i == 1)
+				if l then l.DieTime = 0 end
+			end
+		end
+		return
+	end
+	self.CabDLightOn[n] = true
+	local d = CAB_DLIGHTS[n]
+	local pos = self:LocalToWorld(d.pos)
+	for i = 0, 1 do
+		local l = DynamicLight(key + i, i == 1)
+		if l then
+			l.Pos = pos
+			l.r, l.g, l.b = d.col.r, d.col.g, d.col.b
+			l.Brightness = d.brightness
+			l.Size = d.size
+			l.Decay = d.size*50
+			l.DieTime = CurTime() + 1
+			l.nomodel = i == 0
+		end
+	end
+end
 local ECRAN_KEYS = {"ecran1", "ecran2"}
 function ENT:Think()
 	self.BaseClass.Think(self)
@@ -2586,8 +2617,8 @@ end
 	self:SetLightPower(4,self:GetPackedBool("redlight"))
 
 	local CL1,CL2 = self:GetPackedBool("CabLight1"),self:GetPackedBool("CabLight2")
-	self:SetLightPower(40, CL1 or CL2, 1)
-	self:SetLightPower(41, CL2, 1)
+	self:UpdateCabDLight(1, CL1 or CL2)
+	self:UpdateCabDLight(2, CL2)
 	for i = 1, 5 do
 		local on = (i <= 3 and CL1) or CL2
 		local le = self.ClientEnts["cablamp" .. i]
