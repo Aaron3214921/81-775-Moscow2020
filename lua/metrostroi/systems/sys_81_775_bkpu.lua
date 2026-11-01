@@ -63,7 +63,7 @@ end
 
 function TRAIN_SYSTEM:Outputs()
 	return {
-		"State","Active","OF","RU","DoorsClose","DoorsSelectLeft","DoorsSelectRight","DoorsOpenLeft","DoorsOpenRight","V0",
+		"Power","State","Active","OF","RU","DoorsClose","DoorsSelectLeft","DoorsSelectRight","DoorsOpenLeft","DoorsOpenRight","V0",
 	}
 end
 
