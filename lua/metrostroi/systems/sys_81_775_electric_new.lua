@@ -103,7 +103,7 @@ local TractionFade = {{0,1},{50,1},{60,0.94},{70,0.875},{80,0.81},{90,0.75},{100
 local function TractionFadeAt(v)
 	for i = 1, #TractionFade-1 do
 		local a, b = TractionFade[i], TractionFade[i+1]
-		if v <= b[1] then return a[2] + (b[2]-a[2])*math.Clamp((v-a[1])/(b[1]-a[1]),0,1) end
+		if v <= b[1] then return a[2] + (b[2]-a[2])*Clamp((v-a[1])/(b[1]-a[1]),0,1) end
 	end
 	return TractionFade[#TractionFade][2]
 end
