@@ -300,12 +300,13 @@ function TRAIN_SYSTEM:Think(dT)
 		local closed = true
 		for i=1,4 do
 			if self.Orientation then
-				self:CState("Door"..i.."Closed", Train.BUD.RightDoorState[i] == 0)
-				self:CState("Door"..(i+4).."Closed", Train.BUD.LeftDoorState[i] == 0)
-				self:CState("Door"..i.."Stack", Train.BUD.RightDoorStucked[i])
-				self:CState("Door"..i.."Reverse", ((Train.BUD.AutoReverse or {})[i+4] or 9) < 4)
-				self:CState("Door"..(i+4).."Reverse", ((Train.BUD.AutoReverse or {})[i] or 9) < 4)
-				self:CState("Door"..(i+4).."Stack", Train.BUD.LeftDoorStucked[i])
+				local j = 5 - i
+				self:CState("Door"..i.."Closed", Train.BUD.RightDoorState[j] == 0)
+				self:CState("Door"..(i+4).."Closed", Train.BUD.LeftDoorState[j] == 0)
+				self:CState("Door"..i.."Stack", Train.BUD.RightDoorStucked[j])
+				self:CState("Door"..i.."Reverse", ((Train.BUD.AutoReverse or {})[j+4] or 9) < 4)
+				self:CState("Door"..(i+4).."Reverse", ((Train.BUD.AutoReverse or {})[j] or 9) < 4)
+				self:CState("Door"..(i+4).."Stack", Train.BUD.LeftDoorStucked[j])
 			else
 				self:CState("Door"..i.."Closed", Train.BUD.LeftDoorState[i] == 0)
 				self:CState("Door"..(i+4).."Closed", Train.BUD.RightDoorState[i] == 0)
@@ -315,8 +316,9 @@ function TRAIN_SYSTEM:Think(dT)
 				self:CState("Door"..(i+4).."Stack", Train.BUD.RightDoorStucked[i])
 			end
 			do
-				local aR = ((Train.AODStage or {})[2*(i-1)+1] or 0) >= 3
-				local aL = ((Train.AODStage or {})[2*(i-1)+2] or 0) >= 3
+				local j = self.Orientation and 5 - i or i
+				local aR = ((Train.AODStage or {})[2*(j-1)+1] or 0) >= 3
+				local aL = ((Train.AODStage or {})[2*(j-1)+2] or 0) >= 3
 				self:CState("Door"..i.."Aod", self.Orientation and aR or aL)
 				self:CState("Door"..(i+4).."Aod", self.Orientation and aL or aR)
 			end
@@ -336,8 +338,8 @@ function TRAIN_SYSTEM:Think(dT)
 			if puWork then
 				if self.EncoderFOk == nil then self.EncoderFOk = true end
 				if self.EncoderROk == nil then self.EncoderROk = true end
-				self.EncoderFOk = self.EncoderFOk and (KP.EncoderOk(wF) or Train.Speed < 1.8)
-				self.EncoderROk = self.EncoderROk and (KP.EncoderOk(wR) or Train.Speed < 1.8)
+				if KP.EncoderOk(wF) then self.EncoderFOk = true elseif Train.Speed >= 1.8 then self.EncoderFOk = false end
+				if KP.EncoderOk(wR) then self.EncoderROk = true elseif Train.Speed >= 1.8 then self.EncoderROk = false end
 			else
 				self.EncoderFOk, self.EncoderROk = true, true
 			end

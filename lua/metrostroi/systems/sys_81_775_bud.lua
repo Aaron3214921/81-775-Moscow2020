@@ -235,6 +235,7 @@ function TRAIN_SYSTEM:Think(dT)
     if SERVER and not self.TrigMade then self.TrigMade = true MakeDoorTriggers(self) end
     local Train = self.Train
 
+    local bs = Train.Electric ~= nil and (Train.Electric.Power or 0) > 0
     local LeftDL = 1
     local RightDL = 1
 
@@ -345,14 +346,20 @@ function TRAIN_SYSTEM:Think(dT)
             if self.AODHold[key] and st <= 0 then self.AODHold[key] = nil end
         end
         local holdL, holdR = self.AODHold["L"..i], self.AODHold["R"..i]
-        if holdL then
+        if holdL and not bs then
+            self.LeftDoorDir[i] = 0
+            self.DoorAnnounceState[idxL] = self.LeftDoorState[i] > 0 and "Open" or "Closed"
+        elseif holdL then
             self.LeftDoorDir[i] = -1
             self.LeftDoorState[i] = math.Clamp(self.LeftDoorState[i] - dT / self.LeftDoorSpeed[i], 0, 1)
             self.CloseDelay[idxL] = nil
             self.DoorAnnounceState[idxL] = self.LeftDoorState[i] > 0 and "Closing" or "Closed"
             if self.LeftDoorState[i] <= 0 then self.LeftDoorDir[i] = 0 end
         end
-        if holdR then
+        if holdR and not bs then
+            self.RightDoorDir[i] = 0
+            self.DoorAnnounceState[idxR] = self.RightDoorState[i] > 0 and "Open" or "Closed"
+        elseif holdR then
             self.RightDoorDir[i] = -1
             self.RightDoorState[i] = math.Clamp(self.RightDoorState[i] - dT / self.RightDoorSpeed[i], 0, 1)
             self.CloseDelay[idxR] = nil
@@ -360,11 +367,11 @@ function TRAIN_SYSTEM:Think(dT)
             if self.RightDoorState[i] <= 0 then self.RightDoorDir[i] = 0 end
         end
 
-        if not manualL and not holdL and pwL and Train["DLDoor"..i].Value < 0.5 then
+        if bs and not manualL and not holdL and pwL and Train["DLDoor"..i].Value < 0.5 then
             DoorDrive(self, "L", i, idxL, dT, commandClose)
         end
 
-        if not manualR and not holdR and pwR and Train["DRDoor"..i].Value < 0.5 then
+        if bs and not manualR and not holdR and pwR and Train["DRDoor"..i].Value < 0.5 then
             DoorDrive(self, "R", i, idxR, dT, commandClose)
         end
 
@@ -394,6 +401,16 @@ function TRAIN_SYSTEM:Think(dT)
         Train:SetNW2String("DoorAnnounceState"..idxR, self.DoorAnnounceState[idxR])
     end
 
+    Train:SetNW2Bool("BUDPower", bs)
+    local doorsOpen = false
+    local aod = Train.AODStage or {}
+    for i = 1, 8 do
+        if (aod[i] or 0) >= 3 then doorsOpen = true end
+    end
+    for i = 1, 4 do
+        if self.LeftDoorState[i] > 0 or self.RightDoorState[i] > 0 then doorsOpen = true end
+    end
+    Train:WriteTrainWire(72, doorsOpen and 1 or 0)
     Train:SetPackedBool("DoorL", self.DoorLeft)
     Train:SetPackedBool("DoorR", self.DoorRight)
 
@@ -420,7 +437,7 @@ if CLIENT then
 
         for idx = 1, 8 do
             local state = Train:GetNW2String("DoorAnnounceState" .. idx, "Closed")
-            local alarm = state == "Closing"
+            local alarm = state == "Closing" and Train:GetNW2Bool("BUDPower", false)
 
             Train:SetSoundState("door_alarm_" .. idx, alarm and 1 or 0, alarm and 1 or 0)
 

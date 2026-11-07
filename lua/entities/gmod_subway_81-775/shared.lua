@@ -578,6 +578,8 @@ ENT.Spawner = {
     end
 end},
 
+{"SalonLightTemp","Освещение салона","List",{"Утреннее","Дневное","Вечернее","Ночное"}, 1},
+
     {"SpawnMode","Spawner.Common.SpawnMode","List",{"Spawner.Common.SpawnMode.Full","Spawner.Common.SpawnMode.Deadlock","Spawner.Common.SpawnMode.NightDeadlock","Spawner.Common.SpawnMode.Depot"}, nil,function(ent,val,rot,i,wagnum,rclk)
 		if rclk then return end
 

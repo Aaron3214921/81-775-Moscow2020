@@ -161,10 +161,11 @@ function TRAIN_SYSTEM:Think()
 			Train:SetNW2Bool('C:MFDU:Or'..i,trains[i]["Orientation"])
 			local emer = (trains[i].BCPressure or 0) >= (trains[i].Pn3Pressure or 2.2) - 0.15
 			local ptOn = Train.MFDU and Train.MFDU.MsgRowPT == true and (trains[i].BCPressure or 0) > 0.1
-			Train:SetNW2Bool('C:MFDU:EB'..i, rvOn and not trains[i].BUVNotWork and (emer or ptOn))
+			local pb = (trains[i].PBPressure or 5) < 4.2
+			Train:SetNW2Bool('C:MFDU:EB'..i, rvOn and not trains[i].BUVNotWork and (emer or ptOn or pb))
 			if not trains[i].BUVNotWork then
 				for d = 1, 8 do
-					Train:SetNW2Int('C:MFDU:W'..i..'D'..d,trains[i]["Door"..d.."Closed"] and 4 or trains[i]["Door"..d.."Stack"] and 2 or 1)
+					Train:SetNW2Int('C:MFDU:W'..i..'D'..d,trains[i]["Door"..d.."Aod"] == true and 1 or trains[i]["Door"..d.."Closed"] and 4 or trains[i]["Door"..d.."Stack"] and 2 or 1)
 				end
 			end
 		end

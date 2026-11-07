@@ -69,10 +69,13 @@ function ENT:Initialize()
 	self.Plombs.VTBBlock = true
 	self.Plombs.TLBL = true
 	self.Plombs.K35 = true
+	self.Plombs.KRRH3 = true
+	self.Plombs.DoorBlockk = true
+	self.Plombs.EmerBlockSDk = true
 	self.Plombs.Init = true
 	self:SetPos(self:GetPos() + Vector(0,0,100))
 
-	self.DriverSeat = self:CreateSeat("driver",Vector(435,16,-28))
+	self.DriverSeat = self:CreateSeat("driver",Vector(438.2,16,-28))
 	self.InstructorsSeat = self:CreateSeat("instructor",Vector(410,45,-40),Angle(0,90,0),"models/vehicles/prisoner_pod_inner.mdl")
 	self.InstructorsSeat2 = self:CreateSeat("instructor",Vector(445,-30,-40),Angle(0,90,0),"models/vehicles/prisoner_pod_inner.mdl")
 	self.InstructorsSeat3 = self:CreateSeat("instructor",Vector(400,-45,-30))

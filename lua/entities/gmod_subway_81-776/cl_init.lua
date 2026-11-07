@@ -864,7 +864,13 @@ ENT.ButtonMap["DRD1"] = {
 
 local SALON_PT_PITCH = 65
 local SALON_LEVEL = 0.50
-local SALON_PT_COLOR = Color(255,206,166)
+local SALON_MODES = {
+	{col = Color(255,206,166), mul = 0.85},
+	{col = Color(255,228,206), mul = 1},
+	{col = Color(255,196,137), mul = 0.8},
+	{col = Color(255,196,137), mul = 0.55},
+}
+for _, m in ipairs(SALON_MODES) do m.tint = {m.col.r/255, m.col.g/255, m.col.b/255} end
 local SALON_PT_Z = 35
 local END_LIGHTS = {
 	{key = "SalonPT1", pos = Vector(420,0,SALON_PT_Z), ang = Angle(90,0,0)},
@@ -887,6 +893,7 @@ function ENT:UpdateSalonEndLights(on, power)
 	local lp = LocalPlayer()
 	if on and IsValid(lp) and lp:GetPos():DistToSqr(self:GetPos()) > 1200*1200 then on = false end
 	if not on or power <= 0 then self:RemoveSalonEndLights() return end
+	local mode = self.SalonMode or SALON_MODES[1]
 	if not self.EndLightsHooked then
 		self.EndLightsHooked = true
 		self:CallOnRemove("SalonEndLights", function(ent) ent:RemoveSalonEndLights() end)
@@ -900,12 +907,12 @@ function ENT:UpdateSalonEndLights(on, power)
 			pt:SetFOV(160)
 			pt:SetNearZ(6)
 			pt:SetFarZ(260)
-			pt:SetColor(SALON_PT_COLOR)
 			self[d.key] = pt
 		end
 		pt:SetPos(self:LocalToWorld(d.pos))
 		pt:SetAngles(self:LocalToWorldAngles(Angle(SALON_PT_PITCH, (i%2==0) and 90 or -90, 0)))
-		pt:SetBrightness(0.135*power*(power >= 1 and SALON_LEVEL or 1))
+		pt:SetColor(mode.col)
+		pt:SetBrightness(0.135*power*(power >= 1 and SALON_LEVEL or 1)*mode.mul)
 		pt:Update()
 	end
 end
@@ -919,24 +926,25 @@ local SALON_WORLD_SIDES = {
 	{BOX_FRONT, Vector( 1, 0, 0)}, {BOX_BACK, Vector(-1, 0, 0)},
 	{BOX_RIGHT, Vector( 0, 1, 0)}, {BOX_LEFT, Vector( 0,-1, 0)},
 }
-local SALON_TINT = {1.0, 0.808, 0.651}
-local function SalonSetFace(side, v, k, amb)
-	render.SetModelLighting(side, SALON_TINT[1]*v*k + amb.x, SALON_TINT[2]*v*k + amb.y, SALON_TINT[3]*v*k + amb.z)
+local function SalonSetFace(side, v, k, amb, t)
+	render.SetModelLighting(side, t[1]*v*k + amb.x, t[2]*v*k + amb.y, t[3]*v*k + amb.z)
 end
 local function SalonRenderOverride(ent, flags)
 	local p = ent.SalonLightPow or 0
 	if p <= 0 then ent:DrawModel(flags) return end
-	local k = salonAmbCV:GetFloat() * p * (p >= 1 and SALON_LEVEL or 1)
+	local mode = ent.SalonMode or SALON_MODES[1]
+	local t = mode.tint
+	local k = salonAmbCV:GetFloat() * p * (p >= 1 and SALON_LEVEL or 1) * mode.mul
 	local amb = render.GetLightColor(ent:GetPos()) * 0.15
 	local walls = salonWallsCV:GetFloat()
 	render.SuppressEngineLighting(true)
-	SalonSetFace(BOX_TOP,    salonFloorCV:GetFloat(), k, amb)
-	SalonSetFace(BOX_BOTTOM, salonCeilCV:GetFloat(),  k, amb)
+	SalonSetFace(BOX_TOP,    salonFloorCV:GetFloat(), k, amb, t)
+	SalonSetFace(BOX_BOTTOM, salonCeilCV:GetFloat(),  k, amb, t)
 	local axial = walls * (1 - math.Clamp(salonContrastCV:GetFloat(), 0, 1))
 	local fwd, right = ent:GetForward(), ent:GetRight()
 	for _, f in ipairs(SALON_WORLD_SIDES) do
 		local lx, ly = f[2]:Dot(fwd), f[2]:Dot(right)
-		SalonSetFace(f[1], lx*lx*axial + ly*ly*walls, k, amb)
+		SalonSetFace(f[1], lx*lx*axial + ly*ly*walls, k, amb, t)
 	end
 	ent:DrawModel(flags)
 	render.SuppressEngineLighting(false)
@@ -1289,6 +1297,8 @@ function ENT:Think()
 	local salonOn = self:GetPackedBool("SalonLighting2") or self:GetPackedBool("SalonLighting1")
 	local salonPow = salonOn and (self:GetPackedBool("SalonHV") and 1 or 0.3) or 0
 	if self:GetPackedBool("SalonEmer") then salonPow = salonPow * 0.3 end
+	local salonMode = SALON_MODES[self:GetNW2Int("SalonLightTemp", 1)] or SALON_MODES[1]
+	self.SalonMode = salonMode
 	local lampsEnt = self.ClientEnts["lamps"]
 	if IsValid(lampsEnt) and lampsEnt.SalonLampsOff ~= not salonOn then
 		lampsEnt.SalonLampsOff = not salonOn
@@ -1297,11 +1307,13 @@ function ENT:Think()
 	local salonEnt = self.ClientEnts["salon"]
 	if IsValid(salonEnt) then
 		salonEnt.SalonLightPow = salonPow
+		salonEnt.SalonMode = salonMode
 		if salonEnt.RenderOverride ~= SalonRenderOverride then salonEnt.RenderOverride = SalonRenderOverride end
 	end
 	for n,e in pairs(self.ClientEnts) do
 		if isstring(n) and (string.StartWith(n,"salon_led") or string.StartWith(n,"emerdoor_plate")) and IsValid(e) then
 			e.SalonLightPow = salonPow
+			e.SalonMode = salonMode
 			if e.RenderOverride ~= SalonRenderOverride then e.RenderOverride = SalonRenderOverride end
 		end
 	end
@@ -1329,6 +1341,7 @@ function ENT:Think()
 
 if not self.DoorStates then self.DoorStates = {} end
 if not self.DoorLoopStates then self.DoorLoopStates = {} end
+if not self.DoorPrev then self.DoorPrev = {} self.DoorMoveT = {} end
 
 do
 	local ecranMat = (self:GetNW2Bool("BNT:Active") == true and self:GetNW2Int("TV:Power",0) > 0) and "models/metrostroi_train/81-775/775_ecran.vtf" or "models/metrostroi_train/81-775/775_ecranoff.vtf"
@@ -1349,22 +1362,26 @@ for i=0,3 do
         local state = self:GetPackedRatio(id)
         local aodManual = self:GetNW2Int("AOD"..(k==1 and 2*i+2 or 2*i+1), 0) >= 3
 
-        if (state ~= 1 and state ~= 0) ~= self.DoorStates[id] then
-            if aodManual then
-            elseif doorstate and state < 1 or not doorstate and state > 0 then
-				if doorstate then self:PlayOnce(sid.."op","",1,1) end
+        local now = CurTime()
+        if self.DoorPrev[id] ~= state then
+            if self.DoorPrev[id] ~= nil then self.DoorMoveT[id] = now end
+            self.DoorPrev[id] = state
+        end
+        local moving = state ~= 1 and state ~= 0 and now - (self.DoorMoveT[id] or -1) < 0.3
 
-            else
-                if state > 0 then
-                    self:PlayOnce(sid.."o","",1,1)
-                else
-                    self:PlayOnce(sid.."c","",1,1)
-                end
+        if moving ~= self.DoorStates[id] then
+            if aodManual then
+            elseif moving then
+                if doorstate then self:PlayOnce(sid.."op","",1,1) end
+            elseif state >= 1 then
+                self:PlayOnce(sid.."o","",1,1)
+            elseif state <= 0 then
+                self:PlayOnce(sid.."c","",1,1)
             end
-            self.DoorStates[id] = (state ~= 1 and state ~= 0)
+            self.DoorStates[id] = moving
         end
 
-        if (state ~= 1 and state ~= 0) and not aodManual then
+        if moving and not aodManual then
             self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) + 2*self.DeltaTime,0,1)
         else
             self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) - 6*self.DeltaTime,0,1)

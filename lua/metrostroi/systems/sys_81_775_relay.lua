@@ -1,9 +1,3 @@
---------------------------------------------------------------------------------
--- Generic relay with configureable parameters
---------------------------------------------------------------------------------
--- Copyright (C) 2013-2018 Metrostroi Team & FoxWorks Aerospace s.r.o.
--- Contains proprietary code. See license.txt for additional information.
---------------------------------------------------------------------------------
 Metrostroi.DefineSystem("81_775_Relay")
 
 local relay_types = {

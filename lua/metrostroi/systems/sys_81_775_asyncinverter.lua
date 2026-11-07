@@ -1,9 +1,3 @@
---------------------------------------------------------------------------------
--- 81-722 async inverter and motors
---------------------------------------------------------------------------------
--- Copyright (C) 2013-2018 Metrostroi Team & FoxWorks Aerospace s.r.o.
--- Contains proprietary code. See license.txt for additional information.
---------------------------------------------------------------------------------
 Metrostroi.DefineSystem("81_775_AsyncInverter")
 TRAIN_SYSTEM.DontAccelerateSimulation = false
 

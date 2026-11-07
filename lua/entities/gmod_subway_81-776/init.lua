@@ -21,13 +21,7 @@ ENT.SyncTable = {
 	"GV","K31","Battery","DriverValveTLDisconnect","DriverValveBLDisconnect","EmergencyBrakeValve","stopkran",
 }
 
-local NewMetrostroi = Metrostroi.Version >= 1623941696
 function ENT:Initialize()
-
-	local a = game.GetIPAddress()
-	if a == "185.97.255.43:27882" or a == "185.97.255.43:27578" then
-		return
-	end
 
 	self:SetModel("models/metrostroi_train/81-775/776_body.mdl")
 	self.BaseClass.Initialize(self)
@@ -67,14 +61,11 @@ function ENT:Initialize()
 		[62] = 66,
 	}
 
-	if not NewMetrostroi then
-		self.Lights = {
-			[11] = { "dynamiclight",Vector(380,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512},
-			[12] = { "dynamiclight",Vector(125,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512},
-			[13] = { "dynamiclight",Vector(-125,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512},
-			[14] = { "dynamiclight",Vector(-380,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512},
-		}
-	end
+	self.Lights = self.Lights or {}
+	self.Lights[11] = { "dynamiclight",Vector(380,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512}
+	self.Lights[12] = { "dynamiclight",Vector(125,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512}
+	self.Lights[13] = { "dynamiclight",Vector(-125,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512}
+	self.Lights[14] = { "dynamiclight",Vector(-380,0,60),Angle(0,0,0),Color(255,236,200),brightness = 1.1475,distance = 512}
 
 	self.BARSBlockAnim = -0.1
 	self.PassengerDoor = false

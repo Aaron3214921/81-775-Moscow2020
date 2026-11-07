@@ -252,6 +252,7 @@ function TRAIN_SYSTEM:Think(dT)
 				if not self.PN1Timer then self.PN1Timer = CurTime() end
 				self.Ringing = true
 				Brake = true
+				self.DisableDriveAttempt = true
 			end
 			if not (Train.Speedometer.State > 0) then
 				Brake = false
@@ -295,6 +296,10 @@ function TRAIN_SYSTEM:Think(dT)
 			end
 			if self.BrakeEfficiency and CurTime()-self.BrakeEfficiency >= 3.6 then
 			self.RVTB = 0
+			end
+			if self.DisableDriveAttempt then
+				self.RVTB = 0
+				if KMState <= 0 then self.DisableDriveAttempt = nil end
 			end
 
 			if (Train.BKPU.State and 1 or 0)*Train.SF9.Value == 1 then
@@ -403,6 +408,7 @@ function TRAIN_SYSTEM:Think(dT)
 				if not self.RVTBResetTimer then self.RVTBResetTimer = CurTime() end
 			end
 			if self.RVTBTimer then self.RVTBTimer = nil end
+			self.DisableDriveAttempt = nil
 			if not UOS and self.RollingBraking then self.RollingBraking = nil end
 			self.BrakeEfficiency = nil
 			if (not self.RVTBReset and self.RVTB == 1 or self.RVTBResetTimer and CurTime()-self.RVTBResetTimer > 3) then
@@ -467,10 +473,11 @@ function TRAIN_SYSTEM:Think(dT)
 					end
 					self.UOSActive = false
 					self.RVTB = (self.KB and 1 or 0)
-					self.Drive = 1
+					self.Drive = self.KBUOS and 1 or 0
 				end
-				self.PN1 = 0
-				self.PN2 = 0
+				local UOSHold = self.Speed < 1.8 and (not self.KBUOS or KMState <= 0)
+				self.PN1 = UOSHold and 1 or 0
+				self.PN2 = UOSHold and 1 or 0
 				self.Brake = 0
 
 			elseif ALSVal > 0 then

@@ -227,7 +227,8 @@ function TRAIN_SYSTEM:Think(dT)
 
 		local ab = Train.ATSBlock.Value
 		local function arsAllow(i,atc) if ab == i or ab == 3 then return 1 end return math.min(1,atc.Drive) end
-		local EmerXPower = S["RU"]*C(RV.KRRPosition~=0)*math.min(arsAllow(1,Train.ATC1),arsAllow(2,Train.ATC2))
+		local DoorsOK = math.max(C(Train:ReadTrainWire(72) <= 0), Train.DoorBlock.Value)
+		local EmerXPower = S["RU"]*C(RV.KRRPosition~=0)*math.min(arsAllow(1,Train.ATC1),arsAllow(2,Train.ATC2))*DoorsOK
 
 		Train:WriteTrainWire(19,EmerXPower*Train.EmerX1.Value)
 		Panel.EmerX1 = EmerXPower*Train.EmerX1.Value

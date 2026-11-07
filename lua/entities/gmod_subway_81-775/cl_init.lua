@@ -161,6 +161,9 @@ ENT.ClientProps["Lpult"] = {
 	model = "models/metrostroi_train/81-775/Lpult.mdl",
 	hide = 2,
 	scale = 1.05,
+	callback = function(ent, cent)
+		cent:SetMaterial("models/metrostroi_train/81-775/Lpult")
+	end,
 }
 ENT.ClientProps["chair"] = {
 	pos = Vector(432.8, 16.3, -16.3),
@@ -195,7 +198,7 @@ ENT.ClientProps["cab_glass"] = {
 ENT.ClientProps["pult"] = {
 	pos = Vector(459.6, 23, -21),
 	ang = Angle(0, 0, 0),
-	model = "models/metrostroi_train/81-775/775_pult.mdl",
+	model = "models/metrostroi_train/81-775/775_pult_new.mdl",
 	hide = 2,
 }
 ENT.ClientProps["ecran1"] = {
@@ -336,7 +339,6 @@ ENT.ClientProps["CabinRightDoor"] = {
     pos = Vector(396.3,-64.58, 1.85),
     ang = Angle(0,0,0),
     hide = 2.0,
-
 }
 ENT.ClientProps["CabinLeftDoor"] = {
     model = "models/metrostroi_train/81-775/775_doors_2.mdl",
@@ -899,7 +901,7 @@ ENT.ButtonMap["LPU"] = {
 	}
 }
 
-local headlights_x = 93
+local headlights_x = 97
 local headlights_y = 62
 
 ENT.ButtonMap["CPU"] = {
@@ -911,28 +913,30 @@ ENT.ButtonMap["CPU"] = {
 	hideseat=0.2,
 
 	buttons = {
-		AddLamp("HVoltage", "blue", 125, 20, "HVoltage"),
-		AddLamp("DoorsClosed", "green", 125 + 36, 20, "DoorsClosed"),
-		AddButton("BVDisable", false, "red", 125 + 36 * 2, 20, "BVDisableLamp"),
-		AddButton("BVEnable", false, "green", 125 + 36 * 3, 20, "BVEnableLamp"),
-		AddButton("DoorSelectLeft", true, "white", 126 + 38.7 * 4, 20, "DoorSelectLeftLamp"),
-		AddButton("DoorBlock", true, "red", 295.5 + 36, 20, "DoorBlockLamp"),
-		{ID = "DoorBlockkToggle",x=295.5 + 16, y=30, w=40,h=10, tooltip="", model = {
+		AddLamp("HVoltage", "blue", 127, 20, "HVoltage"),
+		AddLamp("DoorsClosed", "green", 126 + 36, 20, "DoorsClosed"),
+		AddButton("BVDisable", false, "red", 124 + 36 * 2, 20, "BVDisableLamp"),
+		AddButton("BVEnable", false, "green", 123 + 36 * 3, 20, "BVEnableLamp"),
+		AddButton("DoorSelectLeft", true, "white", 120 + 38.7 * 4, 20, "DoorSelectLeftLamp"),
+		AddButton("DoorBlock", true, "red", 290.5 + 36, 20, "DoorBlockLamp"),
+		{ID = "DoorBlockkToggle",x=290.5 + 16, y=30, w=40,h=10, tooltip="", model = {
 			model = "models/metrostroi_train/81-775/81-775_button_cap1.mdl", ang = 90, z = -1, x = 0, y = -15,
 			var="DoorBlockk",speed=8,min=1,max=0, disable="DoorBlockToggle",
+			plomb = {var="DoorBlockkPl", ID="DoorBlockkPl", },
 			sndvol = 1, snd = function(val) return val and "kr_close" or "kr_open" end,
 			sndmin = 90, sndmax = 1e3, sndang = Angle(-90,0,0),
 		}},
 
 		AddButton("DoorSelectRight", true, "white", 113 + 37.7 * 7, 20, "DoorSelectRightLamp"),
-		{ID = "EmerBlockSDToggle",x=61, y=60, radius = 15, tooltip = "", model = {
+		{ID = "EmerBlockSDToggle",x=66, y=57, radius = 15, tooltip = "", model = {
 			model = "models/metrostroi_train/81-722/button_rot.mdl",z=0,ang=40,
 			var="EmerBlockSD",speed=12,vmin=0,vmax=0.25,
 			sndvol = 0.3, snd = function(val) return val and "switch_on" or "switch_off" end,sndmin = 80, sndmax = 1e3/3, sndang = Angle(-90,0,0),
 		}},
-		{ID = "EmerBlockSDkToggle",x=40, y=70, w=40,h=10, tooltip="", model = {
+		{ID = "EmerBlockSDkToggle",x=46, y=67, w=40,h=10, tooltip="", model = {
 			model = "models/metrostroi_train/81-775/81-775_button_cap2.mdl", ang = 90, z = 0, x = 0, y = -15,
 			var="EmerBlockSDk",speed=8,min=1,max=0, disable="EmerBlockSDToggle",
+			plomb = {var="EmerBlockSDkPl", ID="EmerBlockSDkPl", },
 			sndvol = 1, snd = function(val) return val and "kr_close" or "kr_open" end,
 			sndmin = 90, sndmax = 1e3, sndang = Angle(-90,0,0),
 		}},
@@ -945,8 +949,8 @@ ENT.ButtonMap["CPU"] = {
 		{ID="HeadlightsSwitch+",x=headlights_x, y=headlights_y-15, w=15,h=30, tooltip=""},
 		{ID="HeadlightsSwitch-",x=headlights_x-15, y=headlights_y-15, w=15,h=30, tooltip=""},
 
-		AddButton("Autodrive", true, "green", 141.2, 60, "AutodriveLamp"),
-		{ID = "AutodrivekToggle",x=141.2 - 20, y=70, w=40,h=10, tooltip="", model = {
+		AddButton("Autodrive", true, "green", 145.6, 59, "AutodriveLamp"),
+		{ID = "AutodrivekToggle",x=145.6 - 20, y=69, w=40,h=10, tooltip="", model = {
 			model = "models/metrostroi_train/81-775/81-775_button_cap1.mdl", ang = 90, z = -1, x = 0, y = -15,
 			var="Autodrivek",speed=8,min=1,max=0, disable="AutodriveToggle",
 			sndvol = 1, snd = function(val) return val and "kr_close" or "kr_open" end,
@@ -954,12 +958,12 @@ ENT.ButtonMap["CPU"] = {
 		}},
 
 		AddButton("Ring", false, "white", 180, 60),
-		AddButton("Antison", false, "yellow", 180 + 35.8, 60),
-		AddButton("Progrev", true, "green", 179 + 35.8 * 2, 60, "ProgrevLamp"),
+		AddButton("Antison", false, "yellow", 179 + 35.8, 60),
+		AddButton("Progrev", true, "green", 177 + 35.8 * 2, 60, "ProgrevLamp"),
 
-		AddButton("DoorOpenLeft", false, "white", 293.5 + 35.9 * 0, 60, "DoorOpenLeftLamp",0, 0.75),
-		AddButton("DoorClose", true, "green", 293.5 + 35.9 * 1, 60, "DoorCloseLamp"),
-		AddButton("DoorOpenRight", false, "white", 293.5 + 35.9 * 2, 60, "DoorOpenRightLamp",0, 0.75),
+		AddButton("DoorOpenLeft", false, "white", 291.5 + 35.9 * 0, 59, "DoorOpenLeftLamp",0, 0.75),
+		AddButton("DoorClose", true, "green", 289.5 + 35.9 * 1, 59, "DoorCloseLamp"),
+		AddButton("DoorOpenRight", false, "white", 288.5 + 35.9 * 2, 59, "DoorOpenRightLamp",0, 0.75),
 	}
 }
 
@@ -967,7 +971,7 @@ local KR_ANG = 40
 local KR_INVERT = true
 local function krPose(ratio) return ((KR_INVERT and (1-ratio) or ratio)*2)*0.125 end
 
-local EmergencyBrakeButton = AddButton("EmergencyBrake", true, "emerbrake", 81 + 43.85 * 3, 113, "EmergencyBrakeLamp", -5)
+local EmergencyBrakeButton = AddButton("EmergencyBrake", true, "emerbrake", 81 + 43.85 * 3, 111, "EmergencyBrakeLamp", -3)
 EmergencyBrakeButton.tooltip = "Тормоз экстренный"
 EmergencyBrakeButton.model.ang = 180
 EmergencyBrakeButton.model.lamp.z = 0
@@ -981,42 +985,42 @@ ENT.ButtonMap["RPU"] = {
 	hideseat=0.2,
 
 	buttons = {
-		{ID = "!KROSwitch",x=77, y=32,radius = 0, tooltip = "",model = {
+		{ID = "!KROSwitch",x=85, y=32,radius = 0, tooltip = "",model = {
 			getfunc = function(ent) return krPose(ent:GetPackedRatio("KRO")) end, var="!noname1",
 			model = "models/metrostroi_train/81-722/button_rot.mdl",z=0,ang=KR_ANG,
 			speed=2,
 			sndvol = 0.3, snd = function(val) return val and "switch_on" or "switch_off" end,sndmin = 80, sndmax = 1e3/3, sndang = Angle(-90,0,0),
 		}},
-		{ID="KRO+",x=77-15, y=32-15, w=15,h=30, tooltip="Реверс Основной +"},
-		{ID="KRO-",x=77, y=32-15, w=15,h=30, tooltip="Реверс Основной -"},
+		{ID="KRO+",x=85-15, y=32-15, w=15,h=30, tooltip="Реверс Основной +"},
+		{ID="KRO-",x=85, y=32-15, w=15,h=30, tooltip="Реверс Основной -"},
 
-		{ID = "!KRRSwitch",x=120, y=32,radius = 0, tooltip = "",model = {
+		{ID = "!KRRSwitch",x=126, y=32,radius = 0, tooltip = "",model = {
 			getfunc = function(ent) return krPose(ent:GetPackedRatio("KRR")) end, var="!noname2",
 			model = "models/metrostroi_train/81-722/button_rot.mdl",z=0,ang=KR_ANG,
 			speed=2,
 			sndvol = 0.3, snd = function(val) return val and "switch_on" or "switch_off" end,sndmin = 80, sndmax = 1e3/3, sndang = Angle(-90,0,0),
 		}},
-		{ID="KRR+",x=120-15, y=32-15, w=15,h=30, tooltip="Реверс Резервный +"},
-		{ID="KRR-",x=120, y=32-15, w=15,h=30, tooltip="Реверс Резервный -"},
+		{ID="KRR+",x=126-15, y=32-15, w=15,h=30, tooltip="Реверс Резервный +"},
+		{ID="KRR-",x=126, y=32-15, w=15,h=30, tooltip="Реверс Резервный -"},
 
-		{ID = "KRRkToggle",x=100, y=40, w=40,h=10, tooltip="", model = {
+		{ID = "KRRkToggle",x=106, y=36, w=40,h=10, tooltip="", model = {
 			model = "models/metrostroi_train/81-775/81-775_button_cap2.mdl", ang = 90, z = 4, x = 0, y = -10,
 			var="KRRk",speed=8,min=1,max=0,
 			sndvol = 1, snd = function(val) return val and "kr_close" or "kr_open" end,
 			sndmin = 90, sndmax = 1e3, sndang = Angle(-90,0,0),
 		}},
-		AddButton("EmerBrake", true, "red", 167, 32, "EmerBrakeLamp"),
-		AddButton("EmerBrakeAdd", false, "black", 167 + 43.8 * 1, 32),
-		AddButton("EmerBrakeRelease", false, "white", 167 + 43.8 * 2, 32),
+		AddButton("EmerBrake", true, "red", 169, 32, "EmerBrakeLamp"),
+		AddButton("EmerBrakeAdd", false, "black", 166.1 + 43.8 * 1, 32),
+		AddButton("EmerBrakeRelease", false, "white", 165 + 43.8 * 2, 32),
 
-		AddButton("LinkSC", false, "yellow", 86, 74, "LinkSCLamp"),
-		AddButton("AttentionMessage", false, "orange", 82 + 43.85 * 2, 74),
-		AddButton("Attention", false, "red", 80 + 43.85 * 3, 74),
-		AddButton("AttentionBrake", false, "red", 78 + 43.85 * 4, 74),
+		AddButton("LinkSC", false, "yellow", 84.2, 73, "LinkSCLamp"),
+		AddButton("AttentionMessage", false, "orange", 82 + 43.85 * 2, 72),
+		AddButton("Attention", false, "red", 79 + 43.85 * 3, 71),
+		AddButton("AttentionBrake", false, "red", 77 + 43.85 * 4, 71),
 
-		AddButton("Microphone", false, "yellow", 85 + 43.85 * 1, 113, "MicrophoneLamp"),
-		AddButton("R_Program1", false, "yellow", 83 + 43.85 * 2, 113),
-        {ID = "HornBSet",x=85 + 43.85 * 1, y=74, radius=15, tooltip = "Сигнал",model = {
+		AddButton("Microphone", false, "yellow", 85 + 43.85 * 1, 112, "MicrophoneLamp"),
+		AddButton("R_Program1", false, "yellow", 83 + 43.85 * 2, 112),
+        {ID = "HornBSet",x=83 + 43.85 * 1, y=73, radius=15, tooltip = "Сигнал",model = {
             model = "models/metrostroi_train/81-775/81-775_button1_white.mdl",z=-0.5,
             var="HornB",speed=12, vmin=0, vmax=1,
             sndvol = 0.5, snd = function(val) return val and "button_press" or "button_release" end,sndmin = 80, sndmax = 1e3/3, sndang = Angle(-90,0,0),
@@ -1049,6 +1053,7 @@ ENT.ButtonMap["Cranes"] = {
 		{ID = "KRRH3Toggle",x=63.5, y=56,radius = 50, tooltip = "K9: РВТБ",model = {
 			var="KRRH3",
 			model = "models/metrostroi_train/81-775/taps/rvtb.mdl",z=15,ang=0,
+			plomb = {var="KRRH3Pl", ID="KRRH3Pl", },
 			speed=6, max= 1, min = 0,
 			sndvol = 0.3, snd = function(val) return val and "switch_on" or "switch_off" end,sndmin = 80, sndmax = 1e3/3, sndang = Angle(-90,0,0),
 		}},
@@ -1488,17 +1493,10 @@ ENT.ClientProps["compartment1"] = {
 	hide=2,
 }
 
-
 ENT.ClientProps["pb"] = {
 	model = "models/metrostroi_train/81-775/81-775_pb.mdl",
 	pos = Vector(466.13, 35.60, -40.24),
 	ang = Angle(0,0,0),
-}
-ENT.ClientProps["pb_plate"] = {
-	model = "models/metrostroi_train/81-775/81-775_pb_plate.mdl",
-	pos = Vector(459.6, 23, -21),
-	ang = Angle(0,0,0),
-	hide = 2,
 }
 for i, p in ipairs({
 	Vector(401.97,  46.42, 61.10), Vector(401.97, -46.47, 61.10), Vector(402.78, -0.85, 56.84),
@@ -2038,7 +2036,13 @@ local NewMetrostroi = Metrostroi.Version >= 1623941696
 
 local SALON_PT_PITCH = 65
 local SALON_LEVEL = 0.50
-local SALON_PT_COLOR = Color(255,206,166)
+local SALON_MODES = {
+	{col = Color(255,206,166), mul = 0.85},
+	{col = Color(255,228,206), mul = 1},
+	{col = Color(255,196,137), mul = 0.8},
+	{col = Color(255,196,137), mul = 0.55},
+}
+for _, m in ipairs(SALON_MODES) do m.tint = {m.col.r/255, m.col.g/255, m.col.b/255} end
 local SALON_PT_Z = 45
 local END_LIGHTS = {
 	{key = "SalonPT1", pos = Vector(353,0,SALON_PT_Z), ang = Angle(90,0,0)},
@@ -2061,6 +2065,7 @@ function ENT:UpdateSalonEndLights(on, power)
 	local lp = LocalPlayer()
 	if on and IsValid(lp) and lp:GetPos():DistToSqr(self:GetPos()) > 1200*1200 then on = false end
 	if not on or power <= 0 then self:RemoveSalonEndLights() return end
+	local mode = self.SalonMode or SALON_MODES[1]
 	if not self.EndLightsHooked then
 		self.EndLightsHooked = true
 		self:CallOnRemove("SalonEndLights", function(ent) ent:RemoveSalonEndLights() end)
@@ -2074,12 +2079,12 @@ function ENT:UpdateSalonEndLights(on, power)
 			pt:SetFOV(160)
 			pt:SetNearZ(6)
 			pt:SetFarZ(260)
-			pt:SetColor(SALON_PT_COLOR)
 			self[d.key] = pt
 		end
 		pt:SetPos(self:LocalToWorld(d.pos))
 		pt:SetAngles(self:LocalToWorldAngles(Angle(SALON_PT_PITCH, (i%2==0) and 90 or -90, 0)))
-		pt:SetBrightness(0.135*power*(power >= 1 and SALON_LEVEL or 1))
+		pt:SetColor(mode.col)
+		pt:SetBrightness(0.135*power*(power >= 1 and SALON_LEVEL or 1)*mode.mul)
 		pt:Update()
 	end
 end
@@ -2093,24 +2098,25 @@ local SALON_WORLD_SIDES = {
 	{BOX_FRONT, Vector( 1, 0, 0)}, {BOX_BACK, Vector(-1, 0, 0)},
 	{BOX_RIGHT, Vector( 0, 1, 0)}, {BOX_LEFT, Vector( 0,-1, 0)},
 }
-local SALON_TINT = {1.0, 0.808, 0.651}
-local function SalonSetFace(side, v, k, amb)
-	render.SetModelLighting(side, SALON_TINT[1]*v*k + amb.x, SALON_TINT[2]*v*k + amb.y, SALON_TINT[3]*v*k + amb.z)
+local function SalonSetFace(side, v, k, amb, t)
+	render.SetModelLighting(side, t[1]*v*k + amb.x, t[2]*v*k + amb.y, t[3]*v*k + amb.z)
 end
 local function SalonRenderOverride(ent, flags)
 	local p = ent.SalonLightPow or 0
 	if p <= 0 then ent:DrawModel(flags) return end
-	local k = salonAmbCV:GetFloat() * p * (p >= 1 and SALON_LEVEL or 1)
+	local mode = ent.SalonMode or SALON_MODES[1]
+	local t = mode.tint
+	local k = salonAmbCV:GetFloat() * p * (p >= 1 and SALON_LEVEL or 1) * mode.mul
 	local amb = render.GetLightColor(ent:GetPos()) * 0.15
 	local walls = salonWallsCV:GetFloat()
 	render.SuppressEngineLighting(true)
-	SalonSetFace(BOX_TOP,    salonFloorCV:GetFloat(), k, amb)
-	SalonSetFace(BOX_BOTTOM, salonCeilCV:GetFloat(),  k, amb)
+	SalonSetFace(BOX_TOP,    salonFloorCV:GetFloat(), k, amb, t)
+	SalonSetFace(BOX_BOTTOM, salonCeilCV:GetFloat(),  k, amb, t)
 	local axial = walls * (1 - math.Clamp(salonContrastCV:GetFloat(), 0, 1))
 	local fwd, right = ent:GetForward(), ent:GetRight()
 	for _, f in ipairs(SALON_WORLD_SIDES) do
 		local lx, ly = f[2]:Dot(fwd), f[2]:Dot(right)
-		SalonSetFace(f[1], lx*lx*axial + ly*ly*walls, k, amb)
+		SalonSetFace(f[1], lx*lx*axial + ly*ly*walls, k, amb, t)
 	end
 	ent:DrawModel(flags)
 	render.SuppressEngineLighting(false)
@@ -2481,8 +2487,8 @@ function ENT:UpdateIntLight()
 end
 
 local CAB_DLIGHTS = {
-	{pos = Vector(402.3, 0, 38), col = Color(255,203,161), brightness = 0.84, size = 450},
-	{pos = Vector(432.5, 0, 42), col = Color(255,203,161), brightness = 0.56, size = 400},
+	{pos = Vector(402.3, 0, 38), col = Color(255,203,161), brightness = 0.924, size = 450},
+	{pos = Vector(432.5, 0, 42), col = Color(255,203,161), brightness = 0.616, size = 400},
 }
 function ENT:UpdateCabDLight(n, on)
 	self.CabDLightOn = self.CabDLightOn or {}
@@ -2630,6 +2636,8 @@ end
 	local salonOn = self:GetPackedBool("SalonLighting2") or self:GetPackedBool("SalonLighting1")
 	local salonPow = salonOn and (self:GetPackedBool("SalonHV") and 1 or 0.3) or 0
 	if self:GetPackedBool("SalonEmer") then salonPow = salonPow * 0.3 end
+	local salonMode = SALON_MODES[self:GetNW2Int("SalonLightTemp", 1)] or SALON_MODES[1]
+	self.SalonMode = salonMode
 	local lampsEnt = self.ClientEnts["lamps"]
 	if IsValid(lampsEnt) and lampsEnt.SalonLampsOff ~= not salonOn then
 		lampsEnt.SalonLampsOff = not salonOn
@@ -2638,20 +2646,30 @@ end
 	local salonEnt = self.ClientEnts["salon"]
 	if IsValid(salonEnt) then
 		salonEnt.SalonLightPow = salonPow
+		salonEnt.SalonMode = salonMode
 		if salonEnt.RenderOverride ~= SalonRenderOverride then salonEnt.RenderOverride = SalonRenderOverride end
 	end
 	for n,e in pairs(self.ClientEnts) do
 		if isstring(n) and (string.StartWith(n,"salon_led") or string.StartWith(n,"emerdoor_plate")) and IsValid(e) then
 			e.SalonLightPow = salonPow
+			e.SalonMode = salonMode
 			if e.RenderOverride ~= SalonRenderOverride then e.RenderOverride = SalonRenderOverride end
 		end
 	end
-	if IsValid(self.ClientEnts["pult"]) then
+	local pult = self.ClientEnts["pult"]
+	if IsValid(pult) then
 		local pl = math.Round(self:GetPackedRatio("PultLight")*2)
-		local pmat = pl >= 2 and "models/metrostroi_train/81-775/pult_1_lit1" or pl == 1 and "models/metrostroi_train/81-775/pult_1_lit2" or (self:GetPackedBool("RadioLit") and "models/metrostroi_train/81-775/pult_1_r" or "")
-		if self.ClientEnts["pult"].PultMat ~= pmat then
-			self.ClientEnts["pult"].PultMat = pmat
-			self.ClientEnts["pult"]:SetMaterial(pmat)
+		local radio = self:GetPackedBool("RadioLit")
+		local pmat = pl >= 2 and (radio and "models/metrostroi_train/81-775/pult_2_lit1r" or "models/metrostroi_train/81-775/pult_2_lit1") or pl == 1 and (radio and "models/metrostroi_train/81-775/pult_2_lit2r" or "models/metrostroi_train/81-775/pult_2_lit2") or (radio and "models/metrostroi_train/81-775/pult_2_r" or "")
+		if pult.Pult2Slot == nil then
+			pult.Pult2Slot = false
+			for k, m in ipairs(pult:GetMaterials() or {}) do
+				if string.find(m, "pult_2$") then pult.Pult2Slot = k - 1 break end
+			end
+		end
+		if pult.Pult2Slot and pult.PultMat ~= pmat then
+			pult.PultMat = pmat
+			pult:SetSubMaterial(pult.Pult2Slot, pmat)
 		end
 	end
 	if IsValid(self.ClientEnts["Lpult"]) then
@@ -2783,6 +2801,7 @@ end
 	self:Animate("kran_k41", self:GetPackedBool("K41") and 0 or 1, 0, 1, 16, 0.5)
 if not self.DoorStates then self.DoorStates = {} end
 if not self.DoorLoopStates then self.DoorLoopStates = {} end
+if not self.DoorPrev then self.DoorPrev = {} self.DoorMoveT = {} end
 
 do
 	local ecranMat = (self:GetNW2Bool("BNT:Active") == true and self:GetNW2Int("TV:Power",0) > 0) and "models/metrostroi_train/81-775/775_ecran.vtf" or "models/metrostroi_train/81-775/775_ecranoff.vtf"
@@ -2803,22 +2822,26 @@ for i=0,3 do
         local state = self:GetPackedRatio(id)
         local aodManual = self:GetNW2Int("AOD"..(k==1 and 2*i+2 or 2*i+1), 0) >= 3
 
-        if (state ~= 1 and state ~= 0) ~= self.DoorStates[id] then
-            if aodManual then
-            elseif doorstate and state < 1 or not doorstate and state > 0 then
-				if doorstate then self:PlayOnce(sid.."op","",1,1) end
+        local now = CurTime()
+        if self.DoorPrev[id] ~= state then
+            if self.DoorPrev[id] ~= nil then self.DoorMoveT[id] = now end
+            self.DoorPrev[id] = state
+        end
+        local moving = state ~= 1 and state ~= 0 and now - (self.DoorMoveT[id] or -1) < 0.3
 
-            else
-                if state > 0 then
-                    self:PlayOnce(sid.."o","",1,1)
-                else
-                    self:PlayOnce(sid.."c","",1,1)
-                end
+        if moving ~= self.DoorStates[id] then
+            if aodManual then
+            elseif moving then
+                if doorstate then self:PlayOnce(sid.."op","",1,1) end
+            elseif state >= 1 then
+                self:PlayOnce(sid.."o","",1,1)
+            elseif state <= 0 then
+                self:PlayOnce(sid.."c","",1,1)
             end
-            self.DoorStates[id] = (state ~= 1 and state ~= 0)
+            self.DoorStates[id] = moving
         end
 
-        if (state ~= 1 and state ~= 0) and not aodManual then
+        if moving and not aodManual then
             self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) + 2*self.DeltaTime,0,1)
         else
             self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) - 6*self.DeltaTime,0,1)
@@ -2971,7 +2994,6 @@ for i=0,3 do
 	if self.ClientEnts and IsValid(self.ClientEnts["!BARSBlock"]) then
 		self.ClientEnts["!BARSBlock"]:SetPoseParameter("position",1.0-((self.TrueAngle % 360)/360))
 	end
-
 
 	local rollingi = math.min(1,self.TunnelCoeff+math.Clamp((self.StreetCoeff-0.82)/0.5,0,1))
 	local rollings = math.max(self.TunnelCoeff*0.6,self.StreetCoeff)
@@ -3384,7 +3406,6 @@ hook.Add("PostDrawTranslucentRenderables", "775_BezelLEDs", function(depth, sky)
 	end
 end)
 
-
 local EMD_LIST = {
 	{ pos = Vector( 353.90, -53.97, 23.19), ang = Angle(0,  60, 0) },
 	{ pos = Vector( 276.59,  53.97, 23.19), ang = Angle(0, 240, 0) },
@@ -3515,7 +3536,6 @@ function ENT:UpdateEmerDoor()
 		self:HidePanel("AODDoor"..i, stage < 3)
 	end
 end
-
 
 local BUTTON_NAMES_775 = {
 	RPU = {

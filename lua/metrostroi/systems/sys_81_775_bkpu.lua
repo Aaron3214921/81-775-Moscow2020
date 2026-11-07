@@ -1,6 +1,5 @@
 Metrostroi.DefineSystem("81_775_BKPU")
 TRAIN_SYSTEM.DontAccelerateSimulation = true
-CreateConVar("metrostroi_775_outside_temp","-99",{FCVAR_ARCHIVE,FCVAR_REPLICATED},"Outside temperature for the 81-775 climate system, -99 = auto")
 local OutsideTempCV
 
 function TRAIN_SYSTEM:Initialize()
@@ -371,7 +370,7 @@ function TRAIN_SYSTEM:Think()
 			self.PowerCommand = -0.5
 		elseif Train.EmergencyBrake.Value < 0.5 or (BTBU and BTBU.Blocked) then
 			if pos > 0 then
-				self.PowerCommand = Train.ATC1.DisableDrive and 0 or pos
+				self.PowerCommand = (Train.ATC1.DisableDrive or Train.ATC1.UOS and not Train.ATC1.KBUOS) and 0 or pos
 			elseif pos == 0 then
 				self.PowerCommand = 0
 			elseif pos < 0 and pos > -11 then
