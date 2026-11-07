@@ -10,7 +10,6 @@
 	"$phongfresnelranges" "[0.3 0.8 3]"
 	"$phongtint" "[0.9 0.95 1]"
 
-	// Только радиостанция: светится на максимум при бортсети или аварийном питании
 	"$selfillum" "1"
 	"$selfillummask" "models/metrostroi_train/81-775/pult_1_illum_r"
 	"$selfillumtint" "[3.5 3.5 3.5]"

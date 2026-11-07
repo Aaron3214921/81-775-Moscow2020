@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// педаль бдительности и бортики подножки (81-775): чистая шлифованная сталь
 	"$basetexture" "models/metrostroi_train/81-775/pb_metal"
 	"$bumpmap" "models/metrostroi_train/81-775/pb_metal_n"
 	"$model" "1"

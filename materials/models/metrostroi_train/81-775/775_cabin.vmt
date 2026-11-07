@@ -4,12 +4,9 @@
 	"$bumpmap"	"models/metrostroi_train/81-775/775_cabin_n"
 	"$model"	"1"
 
-	// альфа диффуза = маска металла: 255 - панели, 0 - пол (матовый)
 	"$basemapalphaphongmask"	"1"
 	"$basealphaenvmapmask"	"1"
 
-	// окрашенный металл: блик узкий и неяркий (было: exponent 20, boost 0.8, fresnel [0.4 0.8 2] - широкое яркое пятно)
-	// ширина блика - $phongexponent (больше = уже), яркость - $phongboost
 	"$phong"	"1"
 	"$phongexponent"	"60"
 	"$phongboost"	"0.35"

@@ -1,0 +1,9 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/metrostroi_train/81-775/775_body_90"
+	"$model"	"1"
+
+
+
+	"$surfaceprop"	"metal"
+}

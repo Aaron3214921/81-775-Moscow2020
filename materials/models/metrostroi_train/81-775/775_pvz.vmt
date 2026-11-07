@@ -5,7 +5,6 @@
 	"$model"	"1"
 	"$surfaceprop"	"metal"
 
-	// альфа диффуза = маска блеска (пластик ~120, металл 255, краска ~70)
 	"$phong"	"1"
 	"$basemapalphaphongmask"	"1"
 	"$phongexponent"	"30"

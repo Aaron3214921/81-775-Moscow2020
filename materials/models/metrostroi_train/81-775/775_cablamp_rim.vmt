@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// ободок плафона кабины 81-775: светлая сталь с концентрическими рисками (точение), с бликом и отражением
 	"$basetexture" "models/metrostroi_train/81-775/775_cablamp_rim"
 	"$bumpmap" "models/metrostroi_train/81-775/775_cablamp_rim_n"
 	"$model" "1"

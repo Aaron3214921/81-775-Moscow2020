@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// плафон кабины 81-775, выключен: матовый молочный рассеиватель
 	"$basetexture" "models/metrostroi_train/81-775/775_cablamp_off"
 	"$model" "1"
 	"$surfaceprop" "glass"

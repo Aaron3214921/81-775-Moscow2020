@@ -1,21 +1,10 @@
 "VertexLitGeneric"
 {
-	"$basetexture"	"models/metrostroi_train/81-775/775_body"
+	"$basetexture"	"models/metrostroi_train/81-775/775_body_new"
 	"$bumpmap"	"models/metrostroi_train/81-775/775_body_n"
 	"$model"	"1"
 
-	// альфа базовой текстуры = сила блика: кузов 128 (как раньше), чёрная маска 255
-	"$phong"	"1"
-	"$basemapalphaphongmask"	"1"
-	"$phongexponent"	"380"
-	"$phongboost"	"32"
-	"$phongfresnelranges"	"[0.1 0.1 0.1]"
 
-	// отражения окружения только на маске (альфа плоской нормалки _n)
-	"$envmap"	"env_cubemap"
-	"$normalmapalphaenvmapmask"	"1"
-	"$envmaptint"	"[1. 1. 1.]"
-	"$envmapfresnel"	"0.6"
 
 	"$surfaceprop"	"metal"
 }

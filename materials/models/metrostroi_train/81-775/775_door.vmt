@@ -7,7 +7,4 @@
 	"$phongexponent" "48"
 	"$phongboost" "4"
 	"$phongfresnelranges" "[0.1 0.1 0.1]"
-	// $bumpmap убран: models/metrostroi_train/81-502/glass_n - нормаль-карта СТЕКЛА 81-502,
-	// на UV-атласе двери даёт зернистые блики ("точки"). Если нужен прежний вид:
-	// "$bumpmap" "models/metrostroi_train/81-502/glass_n"
 }

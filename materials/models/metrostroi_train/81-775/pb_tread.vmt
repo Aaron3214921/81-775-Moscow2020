@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// рифлёный стальной лист подножки (81-775)
 	"$basetexture" "models/metrostroi_train/81-775/pb_tread"
 	"$bumpmap" "models/metrostroi_train/81-775/pb_tread_n"
 	"$model" "1"

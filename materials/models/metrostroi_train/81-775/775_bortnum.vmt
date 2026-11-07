@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// бортовой номер вагона 81-775/776/777: серебристый металл (цифры - геометрия, прозрачности нет)
 	"$basetexture" "models/metrostroi_train/81-775/775_bortnum"
 	"$model" "1"
 	"$phong" "1"

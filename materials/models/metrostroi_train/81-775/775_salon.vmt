@@ -3,8 +3,6 @@
 	"$basetexture" "models/metrostroi_train/81-775/775_salon"
 	"$model" "1"
 
-	// альфа диффуза = маска блика: стены и пол 0 (мат), потолок ~10%, кожухи ~20%, цоколи ~50%, тёмная стена у кабины ~70%
-	// (без $envmap: отражение кубкарты давало чёрные пятна)
 	"$phong" "1"
 	"$basemapalphaphongmask" "1"
 	"$phongexponent" "24"

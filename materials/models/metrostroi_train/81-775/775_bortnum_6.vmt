@@ -1,6 +1,5 @@
 "VertexLitGeneric"
 {
-	// бортовой номер вагона 81-775/776/777: серебристая цифра 6 (альфа = форма цифры)
 	"$basetexture" "models/metrostroi_train/81-775/775_bortnum_6"
 	"$model" "1"
 	"$alphatest" "1"

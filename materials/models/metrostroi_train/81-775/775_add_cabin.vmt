@@ -5,8 +5,6 @@
 	"$alphatest"	"1"
 	"$model"	"1"
 
-	// металлическая окрашенная панель: блик узкий и неяркий (было: exponent 40, boost 2.5, fresnel [0.4 0.8 2])
-	// ширина блика - $phongexponent (больше = уже), яркость - $phongboost
 	"$phong"	"1"
 	"$phongexponent"	"70"
 	"$phongboost"	"0.6"

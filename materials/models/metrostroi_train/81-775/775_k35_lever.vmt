@@ -1,5 +1,4 @@
 "VertexLitGeneric"
-// кран К35: тот же материал, что у салонного крана К53 (crane_chrome)
 {
 	"$basetexture" "models/metrostroi_train/81-775/crane_chrome"
 	"$envmap" "env_cubemap"

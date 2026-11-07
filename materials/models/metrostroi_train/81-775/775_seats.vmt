@@ -3,14 +3,12 @@
 	"$basetexture"	"models/metrostroi_train/81-775/775_seats"
 	"$model"	"1"
 
-	// альфа базовой текстуры = маска блеска: ткань ~60 (матовая), каркас/трубы 255
 	"$phong"	"1"
 	"$basemapalphaphongmask"	"1"
 	"$phongexponent"	"10"
 	"$phongboost"	"0.4"
 	"$phongfresnelranges"	"[0.1 0.3 1]"
 
-	// мягкий бархатистый контур у ткани
 	"$rimlight"	"1"
 	"$rimlightexponent"	"3"
 	"$rimlightboost"	"0.1"
