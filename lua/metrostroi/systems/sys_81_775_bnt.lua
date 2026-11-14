@@ -162,6 +162,87 @@ if CLIENT then
 		}
 	end
 
+	local SIDE_PANELS = 4
+	local FORCE_REDRAW_INTERVAL = 1
+	local SNAP_LEN = 28
+
+	local function BlinkPhase()
+		local rt = RealTime()
+		if rt % 2.4 > 1.8 then return 1 end
+		if rt % 2 > 1.2 then return 2 end
+		if rt % 2 > 0.6 then return 3 end
+		if rt % 2 > 0 then return 4 end
+		return 0
+	end
+
+	local function Snapshot(self,out)
+		local d = self.CachedData
+		out[1] = d.power
+		out[2] = d.speed and math.floor(d.speed)
+		out[3] = d.time and math.floor(d.time/60)
+		out[4] = d.cs
+		out[5] = d.fs
+		out[6] = d.ls
+		out[7] = d.path
+		out[8] = d.line
+		out[9] = d.arrived
+		out[10] = d.depaeted
+		out[11] = d.active
+		out[12] = d.sync
+		out[13] = d.ay
+		out[14] = d.wagon
+		out[15] = d.temp
+		out[16] = BlinkPhase()
+		out[17] = self.sllc
+		out[18] = self.SlonA
+		out[19] = self.flx
+		out[20] = self.llx
+		out[21] = self.Oyl
+		out[22] = self.Ayl
+		out[23] = self.Oyr
+		out[24] = self.Ayr
+		out[25] = self.ActiveX
+		out[26] = self.ActiveY
+		out[27] = self.ActiveLX
+		out[28] = self.ActiveLY
+	end
+
+	local function SnapshotEqual(a,b)
+		for i = 1, SNAP_LEN do
+			if a[i] ~= b[i] then return false end
+		end
+		return true
+	end
+
+	function TRAIN_SYSTEM:RenderSide(index,rt,left,currentTime)
+		if not rt then return end
+		self.SideState = self.SideState or {}
+		local state = self.SideState[index]
+		if not state then
+			state = {before = {}, after = {}, stable = false, left = nil, drawn = 0}
+			self.SideState[index] = state
+		end
+		local before = state.before
+		Snapshot(self,before)
+		if state.stable and state.left == left and currentTime - state.drawn < FORCE_REDRAW_INTERVAL and SnapshotEqual(before,state.after) then return end
+
+		render.PushRenderTarget(rt,0,0,W,H)
+		render.Clear(0, 0, 0, 0)
+		cam.Start2D()
+			render.SetScissorRect(0, 0, W,H, true)
+			surface.SetDrawColor(0,0,0,0)
+			surface.DrawRect(0,0,W,H)
+			self:DrawPanel(self.Train,left)
+			render.SetScissorRect(0, 0, 0, 0, false)
+		cam.End2D()
+		render.PopRenderTarget()
+
+		Snapshot(self,state.after)
+		state.stable = SnapshotEqual(before,state.after)
+		state.left = left
+		state.drawn = currentTime
+	end
+
 	local optimizationCV
 	function TRAIN_SYSTEM:ClientThink()
 		optimizationCV = optimizationCV or GetConVar("775_optimization")
@@ -182,93 +263,8 @@ if CLIENT then
 
 		local Orientation = self.CachedData.orientation
 
-		render.PushRenderTarget(self.Train.BNTScr,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,not Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr2,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,not Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr3,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,not Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr4,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,not Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr5,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr6,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr7,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
-
-		render.PushRenderTarget(self.Train.BNTScr8,0,0,W,H)
-		render.Clear(0, 0, 0, 0)
-		cam.Start2D()
-			render.SetScissorRect(0, 0, W,H, true)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,W,H)
-			self:DrawPanel(self.Train,Orientation)
-			render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-		render.PopRenderTarget()
+		self:RenderSide(1,self.Train.BNTScr,not Orientation,currentTime)
+		self:RenderSide(2,self.Train.BNTScr5,Orientation,currentTime)
 
 		self.FPSTimer = currentTime
 
@@ -298,7 +294,8 @@ if CLIENT then
 			self.ftrx = station.tr and 90 or tx/2
 		end
 		if cs then
-			self.sllc = math.min(self.sllc+10,sll - 90)
+			self.sllcMax = sll - 90
+			self.sllc = math.min(self.sllc+10,self.sllcMax)
 		end
 		local trx = 0
 		if station.tr and not cs then
@@ -584,19 +581,21 @@ if CLIENT then
 				draw.RoundedBox(0,0,0,W,H,Color(20,20,20))
 				local w,h = draw.SimpleText( sync and not active and "БЛОК НЕАКТИВЕН" or "НЕТ СВЯЗИ","Metrostroi_775D_MS200",self.ActiveX,self.ActiveY,Color(255,255,255),1,1)
 
-				self.ActiveX = self.ActiveX and (self.ActiveXD and self.ActiveX - 14 or self.ActiveX + 14 ) or 1920/2
-				self.ActiveY = self.ActiveY and (self.ActiveYD and self.ActiveY - 7 or self.ActiveY + 7 ) or 238*2
-				if self.ActiveX-w/2 < 0 then
-					self.ActiveXD = false
-				end
-				if self.ActiveX+w/2 > 1920*2 then
-					self.ActiveXD = true
-				end
-				if self.ActiveY-h/2 < 0 then
-					self.ActiveYD = false
-				end
-				if self.ActiveY+h/2 > 238*2 then
-					self.ActiveYD = true
+				for _ = 1, SIDE_PANELS do
+					self.ActiveX = self.ActiveX and (self.ActiveXD and self.ActiveX - 14 or self.ActiveX + 14 ) or 1920/2
+					self.ActiveY = self.ActiveY and (self.ActiveYD and self.ActiveY - 7 or self.ActiveY + 7 ) or 238*2
+					if self.ActiveX-w/2 < 0 then
+						self.ActiveXD = false
+					end
+					if self.ActiveX+w/2 > 1920*2 then
+						self.ActiveXD = true
+					end
+					if self.ActiveY-h/2 < 0 then
+						self.ActiveYD = false
+					end
+					if self.ActiveY+h/2 > 238*2 then
+						self.ActiveYD = true
+					end
 				end
 				return
 			elseif not left and self.ActiveX then
@@ -607,19 +606,21 @@ if CLIENT then
 				draw.RoundedBox(0,0,0,W,H,Color(20,20,20))
 				local w,h = draw.SimpleText("БЛОК НЕАКТИВЕН","Metrostroi_775D_MS200",self.ActiveLX,self.ActiveLY,Color(255,255,255),1,1)
 
-				self.ActiveLX = self.ActiveLX and (self.ActiveLXD and self.ActiveLX + 12 or self.ActiveLX - 12 ) or 1920*2
-				self.ActiveLY = self.ActiveLY and (self.ActiveLYD and self.ActiveLY - 9 or self.ActiveLY + 9 ) or 238/2
-				if self.ActiveLX-w/2 < 0 then
-					self.ActiveLXD = true
-				end
-				if self.ActiveLX+w/2 > 1920*2 then
-					self.ActiveLXD = false
-				end
-				if self.ActiveLY-h/2 < 0 then
-					self.ActiveLYD = false
-				end
-				if self.ActiveLY+h/2 > 238*2 then
-					self.ActiveLYD = true
+				for _ = 1, SIDE_PANELS do
+					self.ActiveLX = self.ActiveLX and (self.ActiveLXD and self.ActiveLX + 12 or self.ActiveLX - 12 ) or 1920*2
+					self.ActiveLY = self.ActiveLY and (self.ActiveLYD and self.ActiveLY - 9 or self.ActiveLY + 9 ) or 238/2
+					if self.ActiveLX-w/2 < 0 then
+						self.ActiveLXD = true
+					end
+					if self.ActiveLX+w/2 > 1920*2 then
+						self.ActiveLXD = false
+					end
+					if self.ActiveLY-h/2 < 0 then
+						self.ActiveLYD = false
+					end
+					if self.ActiveLY+h/2 > 238*2 then
+						self.ActiveLYD = true
+					end
 				end
 				return
 			elseif left and self.ActiveLX then
@@ -630,13 +631,19 @@ if CLIENT then
 			local IsLeft = left and not Map[math.floor(CS/2)+FS].right[path]
 			local IsRight = not left and Map[math.floor(CS/2)+FS].right[path]
 
+			local oyStep,ayStep
 			if left then
-				self.Oyl = math.Clamp(self.Oyl+((left and Map[math.floor(CS/2)+FS].right[path]) and 5 or -5),0,150)
-				self.Ayl = math.Clamp(self.Ayl+((IsLeft and (depaeted and self.SlonA < 120)) and 5 or -5),0,150)
+				oyStep = (left and Map[math.floor(CS/2)+FS].right[path]) and 5 or -5
+				ayStep = (IsLeft and (depaeted and self.SlonA < 120)) and 5 or -5
+				self.Oyl = math.Clamp(self.Oyl+oyStep,0,150)
+				self.Ayl = math.Clamp(self.Ayl+ayStep,0,150)
 			else
-				self.Oyr = math.Clamp(self.Oyr+((not left and not Map[math.floor(CS/2)+FS].right[path]) and 5 or -5),0,150)
-				self.Ayr = math.Clamp(self.Ayr+((IsRight and (depaeted and self.SlonA < 120)) and 5 or -5),0,150)
+				oyStep = (not left and not Map[math.floor(CS/2)+FS].right[path]) and 5 or -5
+				ayStep = (IsRight and (depaeted and self.SlonA < 120)) and 5 or -5
+				self.Oyr = math.Clamp(self.Oyr+oyStep,0,150)
+				self.Ayr = math.Clamp(self.Ayr+ayStep,0,150)
 			end
+			self.sllcMax = nil
 
 			draw.SimpleText(Format("%d км/ч",speed),"Metrostroi_775D_MS50",W/2-250,30,Color(150,150,150),1,1)
 			draw.SimpleText(Format("%d °C",temp),"Metrostroi_775D_MS50",W/2+250,30,Color(150,150,150),1,1)
@@ -682,6 +689,23 @@ if CLIENT then
 				draw.RoundedBox(0,W-size,H-size,size,size,Color(0,255,0))
 			elseif RealTime() % 2 > 0 then
 				draw.RoundedBox(0,W-size,H-size,size,size,Color(0,0,255))
+			end
+
+			local extra = SIDE_PANELS - 1
+			if left then
+				self.Oyl = math.Clamp(self.Oyl+oyStep*extra,0,150)
+				self.Ayl = math.Clamp(self.Ayl+ayStep*extra,0,150)
+			else
+				self.Oyr = math.Clamp(self.Oyr+oyStep*extra,0,150)
+				self.Ayr = math.Clamp(self.Ayr+ayStep*extra,0,150)
+			end
+			self.SlonA = math.min(self.SlonA + 0.2*extra,depaeted and 120 or -20)
+			if self.sllcMax then
+				local shift = math.min(self.sllc + 20*extra,self.sllcMax) - self.sllc
+				if shift > 0 then
+					self.sllc = self.sllc + shift
+					self.flx = self.flx - shift
+				end
 			end
 
 		end

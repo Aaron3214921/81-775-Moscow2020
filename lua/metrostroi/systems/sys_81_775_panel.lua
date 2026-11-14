@@ -69,10 +69,6 @@ function TRAIN_SYSTEM:Initialize()
 	self.Train:LoadSystem("ALSDecoder", "81_775_Relay", "Switch", {bass=true})
 	self.Train:LoadSystem("_Rezerv", "Relay", "Switch", {bass=true})
 
-	self.Train:LoadSystem("StartBAP", "Relay", "Switch", {bass=true})
-	self.Train:LoadSystem("StartBAPk", "Relay", "Switch", {bass=true, normally_closed=true})
-	self.Train:LoadSystem("TestBAP", "Relay", "Switch", {bass=true})
-
 	self.Train:LoadSystem("KRRH3","Relay","Switch", { normally_closed = true})
 	self.Train:LoadSystem("KPRRKM","Relay","Switch",{ normally_closed = true})
 	self.Train:LoadSystem("K27","Relay","Switch", { normally_closed = true})

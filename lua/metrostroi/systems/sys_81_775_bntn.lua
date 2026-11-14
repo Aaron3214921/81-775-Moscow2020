@@ -348,7 +348,7 @@ else
         elseif active then
             DrawActiveDisplay("BNTN", self, Train)
             DrawActiveDisplay("BNTN2", self, Train)
-        else
+        elseif Train:ShouldDrawPanel("BNTN") or Train:ShouldDrawPanel("BNTN2") then
             DrawInactiveDisplay("BNTN", self)
             DrawInactiveDisplay("BNTN2", self)
         end

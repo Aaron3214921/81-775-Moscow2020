@@ -74,6 +74,8 @@ function TRAIN_SYSTEM:Initialize()
 	self.RVTBLeak = 0
 	self.ReserveGoPressure   = 5.0
 	self.ReserveHoldPressure = 4.7
+	self.ReserveTractionPressure = 3.0
+	self.ReserveTractionHold = 2.7
 	self.ReserveReady = false
 	self.DisconnectType = false
 	self.PrevLeak = 0
@@ -245,9 +247,9 @@ function TRAIN_SYSTEM:Think(dT)
 
 	local trainLineConsumption_dPdT = 0.0
 
-	if self.BrakeLinePressure >= self.ReserveGoPressure then
+	if self.BrakeLinePressure >= self.ReserveTractionPressure then
 		self.ReserveReady = true
-	elseif self.BrakeLinePressure < self.ReserveHoldPressure then
+	elseif self.BrakeLinePressure < self.ReserveTractionHold then
 		self.ReserveReady = false
 	end
 
@@ -261,14 +263,14 @@ function TRAIN_SYSTEM:Think(dT)
 		self.CraneActive = V5
 		local dumping = self.RVTBLeak ~= 0 or (Train.BTBU and Train.BTBU.ReserveLeak == true) or self.EmergencyValve == true
 		local noCharge = Train.BTBU and Train.BTBU.ReserveNoCharge == true
-		local reduced = self.TrainToBrakeReducedPressure
+		local TLP = self.TrainLinePressure
 		local craneTargets = {
-			[1] = self.TrainLinePressure,
-			[2] = 1.01*math.min(5.1,reduced),
-			[3] = 1.01*math.min(4.3,reduced),
-			[4] = 1.01*math.min(4.0,reduced),
-			[5] = 1.01*math.min(3.7,reduced),
-			[6] = 1.01*math.min(3.0,reduced),
+			[1] = 1.01*math.min(6.1,TLP),
+			[2] = 1.01*math.min(5.2,TLP),
+			[3] = 1.01*math.min(4.4,TLP),
+			[4] = 1.01*math.min(4.1,TLP),
+			[5] = 1.01*math.min(3.8,TLP),
+			[6] = 1.01*math.min(3.1,TLP),
 			[7] = 0,
 		}
 		local target = craneTargets[self.DriverValvePosition]
@@ -385,7 +387,7 @@ function TRAIN_SYSTEM:Think(dT)
 	self.EmerRelease = emerRelease
 	self.Pn3Pressure = 2.2+self.BrakeCylinderRegulationError+self.WeightLoadRatio*0.6
 	self.ReverserOff = (Train:ReadTrainWire(14) + Train:ReadTrainWire(15)) == 0
-	self.NotInitialized = Train:ReadTrainWire(59) == 0
+	self.NotInitialized = Train:ReadTrainWire(59) == 0 and Train:ReadTrainWire(14) == 0
 	if not Power then
 		EPMPressure = self.Pn3Pressure
 	elseif self.NotInitialized then

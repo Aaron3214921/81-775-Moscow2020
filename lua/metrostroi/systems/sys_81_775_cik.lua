@@ -509,6 +509,7 @@ else
 
 	local scr_w = 1680-5
 	local scr_h = 1200-174
+	local CIK_RENDER_INTERVAL = 0.03
 
 
 
@@ -671,6 +672,9 @@ else
 		end
 
 		if not self.Train:ShouldDrawPanel("CIK") then return end
+		local currentTime = CurTime()
+		if self.LastRenderTime and currentTime - self.LastRenderTime < CIK_RENDER_INTERVAL then return end
+		self.LastRenderTime = currentTime
 		render.PushRenderTarget(self.Train.CIK,0,0,2048,1024)
 		render.Clear(0, 0, 0, 0)
 		cam.Start2D()

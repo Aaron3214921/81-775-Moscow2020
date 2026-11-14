@@ -81,26 +81,39 @@ else
 		return (n and n > 0) and tostring(n) or nil
 	end
 
-	hook.Add("PostDrawTranslucentRenderables", "775_WagonNumPlates", function(depth, sky)
-		if depth or sky then return end
-		local eye = EyePos()
+	local plateTrains, nextPlateScan = {}, 0
+	local function RescanPlateTrains()
+		plateTrains = {}
 		for class, list in pairs(PLATES) do
 			for _, ent in ipairs(ents.FindByClass(class)) do
-				if IsValid(ent) and ent:GetPos():DistToSqr(eye) < ENT_DIST_SQR then
-					local num = WagonNum(ent)
-					if num then
-						for _, pl in ipairs(list) do
-							local wpos = ent:LocalToWorld(pl.pos)
-							if wpos:DistToSqr(eye) < NUM_DIST_SQR then
-								local ang = ent:LocalToWorldAngles(pl.lang)
-								cam.Start3D2D(wpos, ang, NUM_SCALE)
-									local oldClip = DisableClipping(true)
-									render.OverrideDepthEnable(true, false)
-									DrawDigits(num)
-									render.OverrideDepthEnable(false, false)
-									DisableClipping(oldClip)
-								cam.End3D2D()
-							end
+				plateTrains[#plateTrains + 1] = { ent = ent, list = list }
+			end
+		end
+	end
+
+	hook.Add("PostDrawTranslucentRenderables", "775_WagonNumPlates", function(depth, sky)
+		if depth or sky then return end
+		if RealTime() > nextPlateScan then
+			nextPlateScan = RealTime() + 1
+			RescanPlateTrains()
+		end
+		local eye = EyePos()
+		for _, t in ipairs(plateTrains) do
+			local ent, list = t.ent, t.list
+			if IsValid(ent) and ent:GetPos():DistToSqr(eye) < ENT_DIST_SQR then
+				local num = WagonNum(ent)
+				if num then
+					for _, pl in ipairs(list) do
+						local wpos = ent:LocalToWorld(pl.pos)
+						if wpos:DistToSqr(eye) < NUM_DIST_SQR then
+							local ang = ent:LocalToWorldAngles(pl.lang)
+							cam.Start3D2D(wpos, ang, NUM_SCALE)
+								local oldClip = DisableClipping(true)
+								render.OverrideDepthEnable(true, false)
+								DrawDigits(num)
+								render.OverrideDepthEnable(false, false)
+								DisableClipping(oldClip)
+							cam.End3D2D()
 						end
 					end
 				end

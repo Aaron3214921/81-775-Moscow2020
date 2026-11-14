@@ -318,6 +318,14 @@ local function PrintText(x, textChars)
     end
 end
 
+local SCREEN_PANELS = {"ScreenOne","ScreenTwo","ScreenThree","ScreenFour","ScreenFive","ScreenSix"}
+local function AnyScreenVisible(Train)
+    for i = 1, #SCREEN_PANELS do
+        if Train:ShouldDrawPanel(SCREEN_PANELS[i]) then return true end
+    end
+    return false
+end
+
 local optimizationCV2
 function TRAIN_SYSTEM:ClientThink()
 
@@ -339,6 +347,8 @@ function TRAIN_SYSTEM:ClientThink()
 
     if currentTime - self.LastRenderTime < self.RenderInterval then return end
     self.LastRenderTime = currentTime
+
+    if not AnyScreenVisible(self.Train) then return end
 
     if currentTime - self.LastDataUpdate > self.DataUpdateInterval then
         self:UpdateCachedData()

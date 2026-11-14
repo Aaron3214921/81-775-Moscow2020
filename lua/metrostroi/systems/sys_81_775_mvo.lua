@@ -171,6 +171,7 @@ else
 	local CamRT = surface.GetTextureID( "pp/rt" )
     local CamRTM = Material( "pp/rt" )
     local CamsPos = Vector(477,34,-14)
+	local CAM_REFRESH_INTERVAL = 0.1
 	function TRAIN_SYSTEM:ClientInitialize()
         self.Cam1 = self.Train:CreateRT("775CAMSC1",800,600,true)
         self.Cam2 = self.Train:CreateRT("775CAMSC2",400,600,true)
@@ -199,16 +200,18 @@ else
 		local Cam5,Cam5E,Cam5Pos = train:GetNW2Bool("MVO_Cam5C"),train:GetNW2Entity("MVO_Cam5E"),train:GetNW2Bool("MVO_Cam5Pos",false)
 		local Cam6,Cam6E,Cam6Pos = train:GetNW2Bool("MVO_Cam6C"),train:GetNW2Entity("MVO_Cam6E"),train:GetNW2Bool("MVO_Cam6Pos",false)
 		local Cam7,Cam7E,Cam7Pos = train:GetNW2Bool("MVO_Cam7C"),train:GetNW2Entity("MVO_Cam7E"),train:GetNW2Bool("MVO_Cam7Pos",false)
-		if Cam1 and not Cam2 then
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam1",0,self.Cam1,Cam1E,Vector(435,0,30)+(Cam1Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),800,600,1,1,1)
-		elseif Cam1 and Cam2 then
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam2",0,self.Cam2,Cam1E,Vector(435,0,26)+(Cam1Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,600,1,1,1)
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam3",0,self.Cam3,Cam2E,Vector(435,0,26)+(Cam2Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,600,1,1,1)
-		else
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam4",0,self.Cam4,Cam4E,Vector(435,5,30)+(Cam4Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam5",0,self.Cam5,Cam5E,Vector(435,-5,30)+(Cam5Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam6",0,self.Cam6,Cam6E,Vector(435,5,30)+(Cam6Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
-			Metrostroi.RenderCamOnRT(train,CamsPos,"Cam7",0,self.Cam7,Cam7E,Vector(435,-5,26)+(Cam7Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
+		if state >= 1 then
+			if Cam1 and not Cam2 then
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam1",CAM_REFRESH_INTERVAL,self.Cam1,Cam1E,Vector(435,0,30)+(Cam1Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),800,600,1,1,1)
+			elseif Cam1 and Cam2 then
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam2",CAM_REFRESH_INTERVAL,self.Cam2,Cam1E,Vector(435,0,26)+(Cam1Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,600,1,1,1)
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam3",CAM_REFRESH_INTERVAL,self.Cam3,Cam2E,Vector(435,0,26)+(Cam2Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,600,1,1,1)
+			else
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam4",CAM_REFRESH_INTERVAL,self.Cam4,Cam4E,Vector(435,5,30)+(Cam4Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam5",CAM_REFRESH_INTERVAL,self.Cam5,Cam5E,Vector(435,-5,30)+(Cam5Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam6",CAM_REFRESH_INTERVAL,self.Cam6,Cam6E,Vector(435,5,30)+(Cam6Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
+				Metrostroi.RenderCamOnRT(train,CamsPos,"Cam7",CAM_REFRESH_INTERVAL,self.Cam7,Cam7E,Vector(435,-5,26)+(Cam7Pos and Vector(0,74,0) or Vector(0,-74,0)),Angle(0,180,0),400,300,1,1,1)
+			end
 		end
 
         if self.state ~= -3 then

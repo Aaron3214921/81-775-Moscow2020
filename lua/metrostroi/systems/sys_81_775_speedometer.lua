@@ -112,7 +112,7 @@ end
 function TRAIN_SYSTEM:Think()
 	local Train = self.Train
 
-	local Speedometer_Power = Train.Electric.Power*Train.SF5.Value > 0.5
+	local Speedometer_Power = Train.Electric.Power*Train.SF6.Value > 0.5
 
 	local BKPU = Train.BKPU
 	local trains = BKPU.Trains

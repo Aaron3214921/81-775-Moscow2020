@@ -49,6 +49,7 @@ function TRAIN_SYSTEM:Initialize()
 	self.DoorStartAttempt = false
 	self.PadWarmup = false
 	self.EDTReplace = false
+	self.BVOff = false
 	self.SlopeEnabled = false
 	self.Slope = false
 	self.SlopeDone = false
@@ -70,6 +71,7 @@ if TURBOSTROI or CLIENT then return end
 
 local SLOPE_SPEED = 2
 local SLOPE_HOLD_TIME = 1.0
+local BV_HOLD_TIME = 3
 
 function TRAIN_SYSTEM:CANReceive(source,sourceid,target,targetid,textdata,data)
 
@@ -110,7 +112,7 @@ function TRAIN_SYSTEM:Think()
 	local Train = self.Train
 	local Electric = Train.Electric
 	local BUV = Train.BUV
-	self.Power = Electric.Power*(Train.SF5.Value+Train.SF6.Value)*(BUV.Voltage > 60 and 1 or 0)
+	self.Power = Electric.Power*(Train.SF5.Value+Train.SF6.Value)*(BUV.Voltage > 58 and 1 or 0)
 	local Power = self.Power>0
 	if self.State ~= Power then
 		if Power then
@@ -119,6 +121,7 @@ function TRAIN_SYSTEM:Think()
 			self.Prepared = CurTime()-9.5
 			self.PantCmd = nil
 			self.CheckTrain = nil
+			self.BVOff = false
 		else
 			self.Prepared = false
 			self.CheckTrain = false
@@ -240,10 +243,8 @@ function TRAIN_SYSTEM:Think()
 		self.PantCmd = self.PantCmd or {}
 		local pos = Train.PantBlock and Train.PantBlock.Value or 0
 		local half = #self.Trains/2
-		local standing = math.abs(Train.Speed) < 0.5
 		for i,t in ipairs(self.Trains) do
-			local want = pos == 3 or (pos == 1 and i <= half) or (pos == 2 and i > half)
-			if standing or self.PantCmd[i] == nil then self.PantCmd[i] = want end
+			self.PantCmd[i] = pos == 3 or (pos == 1 and i <= half) or (pos == 2 and i > half)
 			self:CStateTarget("DisablePant"..i,"DisablePant","BUV",t.ID,self.PantCmd[i])
 		end
 
@@ -298,11 +299,13 @@ function TRAIN_SYSTEM:Think()
 		if BTBU and BTBU.ReserveLeak then self.SDArmed = false end
 		self.SDLowCount = low
 		local rgo = Train.Pneumatic.ReserveGoPressure or 5.0
-		local rhold = Train.Pneumatic.ReserveHoldPressure or 4.7
-		local full, hold = 0, 0
+		local rtr = Train.Pneumatic.ReserveTractionPressure or 3.0
+		local rhold = Train.Pneumatic.ReserveTractionHold or 2.7
+		local full, go, hold = 0, 0, 0
 		for _,t in ipairs(self.Trains) do
 			if t.BLPressure and not t.BUVNotWork then
 				if t.BLPressure >= rgo then full = full + 1 end
+				if t.BLPressure >= rtr then go = go + 1 end
 				if t.BLPressure >= rhold then hold = hold + 1 end
 			end
 		end
@@ -312,7 +315,7 @@ function TRAIN_SYSTEM:Think()
 		end
 		self.TMMin = tmMin
 		self.TMAllFull = cnt > 0 and full == cnt
-		if cnt > 0 and full == cnt then self.ReserveCharged = true
+		if cnt > 0 and go == cnt then self.ReserveCharged = true
 		elseif cnt == 0 or hold < cnt then self.ReserveCharged = false end
 		self.SDTrip = self.SDArmed == true and low >= 2 and Train.EmerBlockSD.Value < 0.5
 		self.ControllerPosition = math.Round(Train.Controller.Controller,1)
@@ -396,7 +399,7 @@ function TRAIN_SYSTEM:Think()
 			self.DoorStartAttempt = false
 		end
 
-		self.PadWarmup = Train.Progrev.Value > 0.5 and self.PowerCommand == 0 and Train.Speed > 3
+		self.PadWarmup = Train.Progrev.Value > 0.5 and self.PowerCommand <= 0
 
 		local EDT_END_SPEED, EDT_HYST = 5, 1.5
 		local ctrlBraking = pos < 0 and self.PowerCommand < 0 and not CommandBraking
@@ -465,16 +468,29 @@ function TRAIN_SYSTEM:Think()
 		self:CState("DoorsSelectRight", self.DoorsSelectRight)
 		self:CState("DoorsOpenLeft", self.DoorsOpenLeft)
 		self:CState("DoorsOpenRight", self.DoorsOpenRight)
-		self:CState("BVEnable", self.BVEnable)
-		self:CState("BVDisable", self.BVDisable)
-
-		if Train.BVEnable.Value > 0.5 then
-			self:CState("BVDisable", false)
-			self:CState("BVEnable", true)
-		end
-		if Train.BVDisable.Value > 0.5 then
-			self:CState("BVEnable", false)
-			self:CState("BVDisable", true)
+		do
+			local now = CurTime()
+			local en = Train.BVEnable.Value > 0.5
+			local dis = Train.BVDisable.Value > 0.5
+			if dis and not en then
+				self.BVDisHold = self.BVDisHold or now
+				if now - self.BVDisHold >= BV_HOLD_TIME then self.BVOff = true end
+			else
+				self.BVDisHold = nil
+			end
+			if en and not dis then
+				self.BVEnHold = self.BVEnHold or now
+				if not self.BVEnDone and now - self.BVEnHold >= BV_HOLD_TIME then
+					self.BVEnDone = true
+					self.BVOff = false
+					self.BVResetCount = (self.BVResetCount or 0) + 1
+				end
+			else
+				self.BVEnHold = nil
+				self.BVEnDone = nil
+			end
+			self:CState("BVDisable", self.BVOff == true)
+			self:CState("BVEnable", self.BVResetCount or 0)
 		end
 
 		do

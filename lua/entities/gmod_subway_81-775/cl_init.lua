@@ -1072,28 +1072,6 @@ ENT.ButtonMap["Cranes"] = {
 	}
 }
 
-ENT.ButtonMap["bap_panel"] = {
-
-	pos = Vector(416.4, 15, 69.65),
-	ang = Angle(0, 90, 90),
-	width = 110,
-	height = 60,
-	scale = 0.06,
-	hideseat=0.2,
-
-	buttons = {
-		AddButton("StartBAP", false, "red", 28, 36),
-		{ID = "StartBAPkToggle",x=8, y=44, w=40,h=10, tooltip="", model = {
-			model = "models/metrostroi_train/81-775/81-775_button_cap1.mdl", ang = 90, z = 0, x = 0, y = -15,
-			var="StartBAPk",speed=8,min=1,max=0, disable="StartBAPSet",
-			sndvol = 1, snd = function(val) return val and "kr_close" or "kr_open" end,
-			sndmin = 90, sndmax = 1e3, sndang = Angle(-90,0,0),
-		}},
-
-		AddButton("TestBAP", false, "black", 83, 36),
-	}
-}
-
 ENT.ClientProps["headlightoff"] = {
 	model = "models/metrostroi_train/81-775/light_off.mdl",
 	pos = Vector(485.3, 0, 3.3),
@@ -2055,14 +2033,20 @@ local END_LIGHTS = {
 	{key = "SalonPT8", pos = Vector(-442,0,SALON_PT_Z), ang = Angle(90,0,0)},
 }
 function ENT:RemoveSalonEndLights()
+	self.EndLightsState = nil
 	for _,d in ipairs(END_LIGHTS) do
 		local pt = self[d.key]
 		if IsValid(pt) then pt:Remove() end
 		self[d.key] = nil
 	end
 end
+local endLightsOffCV = CreateClientConVar("775_optimization3","0",true,false)
+local SALON_PT_IDLE_INTERVAL = 0.2
+local SALON_PT_ANG_EVEN = Angle(SALON_PT_PITCH, 90, 0)
+local SALON_PT_ANG_ODD = Angle(SALON_PT_PITCH, -90, 0)
 function ENT:UpdateSalonEndLights(on, power)
 	local lp = LocalPlayer()
+	if on and endLightsOffCV:GetBool() then on = false end
 	if on and IsValid(lp) and lp:GetPos():DistToSqr(self:GetPos()) > 1200*1200 then on = false end
 	if not on or power <= 0 then self:RemoveSalonEndLights() return end
 	local mode = self.SalonMode or SALON_MODES[1]
@@ -2070,6 +2054,17 @@ function ENT:UpdateSalonEndLights(on, power)
 		self.EndLightsHooked = true
 		self:CallOnRemove("SalonEndLights", function(ent) ent:RemoveSalonEndLights() end)
 	end
+	local pos, ang = self:GetPos(), self:GetAngles()
+	local brightness = 0.135*power*(power >= 1 and SALON_LEVEL or 1)*mode.mul
+	local now = RealTime()
+	local st = self.EndLightsState
+	if not st then
+		st = {}
+		self.EndLightsState = st
+	elseif st.pos == pos and st.ang == ang and st.mode == mode and st.brightness == brightness and now - st.time < SALON_PT_IDLE_INTERVAL then
+		return
+	end
+	st.pos, st.ang, st.mode, st.brightness, st.time = pos, ang, mode, brightness, now
 	for i,d in ipairs(END_LIGHTS) do
 		local pt = self[d.key]
 		if not IsValid(pt) then
@@ -2082,9 +2077,9 @@ function ENT:UpdateSalonEndLights(on, power)
 			self[d.key] = pt
 		end
 		pt:SetPos(self:LocalToWorld(d.pos))
-		pt:SetAngles(self:LocalToWorldAngles(Angle(SALON_PT_PITCH, (i%2==0) and 90 or -90, 0)))
+		pt:SetAngles(self:LocalToWorldAngles((i%2==0) and SALON_PT_ANG_EVEN or SALON_PT_ANG_ODD))
 		pt:SetColor(mode.col)
-		pt:SetBrightness(0.135*power*(power >= 1 and SALON_LEVEL or 1)*mode.mul)
+		pt:SetBrightness(brightness)
 		pt:Update()
 	end
 end
@@ -2143,14 +2138,25 @@ for i = 1, BORTNUM.max do
 	}
 end
 
+local BORT_SIDES = {"l", "r"}
+local BORT_NAMES = {l = {}, r = {}}
+for i = 1, BORTNUM.max do
+	BORT_NAMES.l[i] = "bortnum_l"..i
+	BORT_NAMES.r[i] = "bortnum_r"..i
+end
+
 function ENT:UpdateBortNumber()
 	if not self.ClientEnts or not self.GetWagonNumber then return end
-	local num = tostring(self:GetWagonNumber() or "")
-	num = string.gsub(num, "%D", "")
+	local raw = self:GetWagonNumber() or ""
+	if self.BortNumRaw ~= raw then
+		self.BortNumRaw = raw
+		self.BortNumStr = string.gsub(tostring(raw), "%D", "")
+	end
+	local num = self.BortNumStr
 	local n = #num
 	for i = 1, BORTNUM.max do
-		for _, side in ipairs({"l", "r"}) do
-			local ent = self.ClientEnts["bortnum_"..side..i]
+		for _, side in ipairs(BORT_SIDES) do
+			local ent = self.ClientEnts[BORT_NAMES[side][i]]
 			if IsValid(ent) and ent.BortKey ~= num then
 				ent.BortKey = num
 				local d = tonumber(string.sub(num, i, i))
@@ -2183,13 +2189,13 @@ function ENT:Initialize()
 	self.BNTN = self:CreateRT("775BNTN",570*4,72*4)
 	self.BNTN2 = self:CreateRT("775BNTN2",570*4,72*4)
 	self.BNTScr = self:CreateRT("775BNT",1920*2,238*2)
-	self.BNTScr2 = self:CreateRT("775BNT2",1920*2,238*2)
-	self.BNTScr3 = self:CreateRT("775BNT3",1920*2,238*2)
-	self.BNTScr4 = self:CreateRT("775BNT4",1920*2,238*2)
+	self.BNTScr2 = self.BNTScr
+	self.BNTScr3 = self.BNTScr
+	self.BNTScr4 = self.BNTScr
 	self.BNTScr5 = self:CreateRT("775BNT5",1920*2,238*2)
-	self.BNTScr6 = self:CreateRT("775BNT6",1920*2,238*2)
-	self.BNTScr7 = self:CreateRT("775BNT7",1920*2,238*2)
-	self.BNTScr8 = self:CreateRT("775BNT8",1920*2,238*2)
+	self.BNTScr6 = self.BNTScr5
+	self.BNTScr7 = self.BNTScr5
+	self.BNTScr8 = self.BNTScr5
 	self.SCREEN = self:CreateRT("717SCREEN",1080,676)
 	self.ReleasedPdT = 0
 	self.PreviousRingState = false
@@ -2520,6 +2526,58 @@ function ENT:UpdateCabDLight(n, on)
 	end
 end
 local ECRAN_KEYS = {"ecran1", "ecran2"}
+local DOOR_LED_OFF = "models/metrostroi_train/81-775/led.vtf"
+local DOOR_LED_RED = "models/metrostroi_train/81-775/led_red.vtf"
+local DOOR_LED_GREEN = "models/metrostroi_train/81-775/led_green.vtf"
+local DOOR_LED_WHITE = "models/metrostroi_train/81-775/led_white.vtf"
+local DOOR_INFO = {}
+for i = 0, 3 do
+	for k = 0, 1 do
+		local side = k == 1 and "DoorL" or "DoorR"
+		local sid = "door"..i.."x"..k
+		DOOR_INFO[#DOOR_INFO + 1] = {
+			side = side,
+			id = side..(i + 1),
+			sid = sid,
+			loop = sid.."r",
+			led = "salon_led"..i.."x"..k,
+			aod = "AOD"..(k == 1 and 2*i + 2 or 2*i + 1),
+			announce = "DoorAnnounceState"..(k == 1 and i + 1 or i + 5),
+			light = k == 1 and "DoorLightL" or "DoorLightR",
+			slot = i == 0 and 1 or 2,
+		}
+	end
+end
+local function SetLedMat(ent, slot, mat)
+	if ent.DoorLedMat ~= mat then
+		ent.DoorLedMat = mat
+		ent:SetSubMaterial(slot, mat)
+	end
+end
+local propNameCache = setmetatable({}, {__mode = "k"})
+local function PropNames(props, id, match)
+	local cache = propNameCache[props]
+	if not cache then
+		cache = {}
+		propNameCache[props] = cache
+	end
+	local list = cache[id]
+	if not list then
+		list = {}
+		for n in pairs(props) do
+			if isstring(n) and match(n) then list[#list + 1] = n end
+		end
+		cache[id] = list
+	end
+	return list
+end
+local function IsSalonLitProp(n) return string.StartWith(n,"salon_led") or string.StartWith(n,"emerdoor_plate") end
+local function IsIntLightProp(n) return string.StartWith(n,"int_light") end
+local INT_LIGHT_ON = Color(255,255,255)
+local INT_LIGHT_OFF = Color(25,25,25)
+local CAB_DOOR_NAMES = {"CabinRightDoor", "CabinLeftDoor"}
+local CAB_DOOR_PARTS = {"CabinRightDoor", "CabinLeftDoor", "CabinRightDoorGlass", "CabinLeftDoorGlass"}
+local CAB_DOOR_GLASS = {{"CabinLeftDoorGlass", "CabinLeftDoor"}, {"CabinRightDoorGlass", "CabinRightDoor"}}
 function ENT:Think()
 	self.BaseClass.Think(self)
 	self:UpdateBortNumber()
@@ -2649,8 +2707,9 @@ end
 		salonEnt.SalonMode = salonMode
 		if salonEnt.RenderOverride ~= SalonRenderOverride then salonEnt.RenderOverride = SalonRenderOverride end
 	end
-	for n,e in pairs(self.ClientEnts) do
-		if isstring(n) and (string.StartWith(n,"salon_led") or string.StartWith(n,"emerdoor_plate")) and IsValid(e) then
+	for _,n in ipairs(PropNames(self.ClientProps,"salonlit",IsSalonLitProp)) do
+		local e = self.ClientEnts[n]
+		if IsValid(e) then
 			e.SalonLightPow = salonPow
 			e.SalonMode = salonMode
 			if e.RenderOverride ~= SalonRenderOverride then e.RenderOverride = SalonRenderOverride end
@@ -2695,9 +2754,19 @@ end
 		end
 	end
 	self:UpdateSalonEndLights(salonOn, salonPow)
-	for n, e in pairs(self.ClientEnts) do
-		if isstring(n) and string.StartWith(n,"int_light") and IsValid(e) then
-			e:SetColor((n:find("doors") and (self:GetPackedBool("DoorLightL") or self:GetPackedBool("DoorLightR")) or n:find("doors") == nil and salonOn) and Color(255,255,255) or Color(25,25,25))
+	do
+		local doorLight = self:GetPackedBool("DoorLightL") or self:GetPackedBool("DoorLightR")
+		for _,n in ipairs(PropNames(self.ClientProps,"intlight",IsIntLightProp)) do
+			local e = self.ClientEnts[n]
+			if IsValid(e) then
+				local lit
+				if n:find("doors") then lit = doorLight else lit = salonOn end
+				lit = lit and true or false
+				if e.IntLightLit ~= lit then
+					e.IntLightLit = lit
+					e:SetColor(lit and INT_LIGHT_ON or INT_LIGHT_OFF)
+				end
+			end
 		end
 	end
 
@@ -2717,11 +2786,11 @@ end
 	end
 	local rightDoor = self:UpdateDoor("CabinDoorRight", "CabinRightDoor")
 	self:UpdateDoor("CabinDoorLeft", "CabinLeftDoor")
-	for _, nm in ipairs({"CabinRightDoor", "CabinLeftDoor", "CabinRightDoorGlass", "CabinLeftDoorGlass"}) do
+	for _, nm in ipairs(CAB_DOOR_PARTS) do
 		local de = self.ClientEnts[nm]
 		if IsValid(de) and de.RenderOverride then de.RenderOverride = nil end
 	end
-	for _, nm in ipairs({"CabinRightDoor", "CabinLeftDoor"}) do
+	for _, nm in ipairs(CAB_DOOR_NAMES) do
 		local de = self.ClientEnts[nm]
 		if IsValid(de) and not de.NoGlareSet then
 			for i, mat in ipairs(de:GetMaterials()) do
@@ -2733,7 +2802,7 @@ end
 		end
 	end
 	do
-		for _, pr in ipairs({{"CabinLeftDoorGlass", "CabinLeftDoor"}, {"CabinRightDoorGlass", "CabinRightDoor"}}) do
+		for _, pr in ipairs(CAB_DOOR_GLASS) do
 			local lg, ld = self.ClientEnts[pr[1]], self.ClientEnts[pr[2]]
 			if IsValid(lg) and IsValid(ld) and lg:GetParent() ~= ld then
 				lg:SetParent(ld)
@@ -2814,111 +2883,98 @@ do
 	end
 end
 
-for i=0,3 do
-    for k=0,1 do
-        local st = k==1 and "DoorL" or "DoorR"
-        local doorstate = self:GetPackedBool(st)
-        local id,sid = st..(i+1),"door"..i.."x"..k
-        local state = self:GetPackedRatio(id)
-        local aodManual = self:GetNW2Int("AOD"..(k==1 and 2*i+2 or 2*i+1), 0) >= 3
+do
+	local now = CurTime()
+	local blinkOn = now%0.5 > 0.25
+	local depart123 = self:GetNW2Bool("Depart123")
+	local depaeted = self:GetNW2Bool("BNT:Depaeted")
+	local cents = self.ClientEnts
+	for _, d in ipairs(DOOR_INFO) do
+		local doorstate = self:GetPackedBool(d.side)
+		local id,sid = d.id,d.sid
+		local state = self:GetPackedRatio(id)
+		local aodManual = self:GetNW2Int(d.aod, 0) >= 3
 
-        local now = CurTime()
-        if self.DoorPrev[id] ~= state then
-            if self.DoorPrev[id] ~= nil then self.DoorMoveT[id] = now end
-            self.DoorPrev[id] = state
-        end
-        local moving = state ~= 1 and state ~= 0 and now - (self.DoorMoveT[id] or -1) < 0.3
+		if self.DoorPrev[id] ~= state then
+			if self.DoorPrev[id] ~= nil then self.DoorMoveT[id] = now end
+			self.DoorPrev[id] = state
+		end
+		local moving = state ~= 1 and state ~= 0 and now - (self.DoorMoveT[id] or -1) < 0.3
 
-        if moving ~= self.DoorStates[id] then
-            if aodManual then
-            elseif moving then
-                if doorstate then self:PlayOnce(sid.."op","",1,1) end
-            elseif state >= 1 then
-                self:PlayOnce(sid.."o","",1,1)
-            elseif state <= 0 then
-                self:PlayOnce(sid.."c","",1,1)
-            end
-            self.DoorStates[id] = moving
-        end
-
-        if moving and not aodManual then
-            self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) + 2*self.DeltaTime,0,1)
-        else
-            self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) - 6*self.DeltaTime,0,1)
-        end
-        self:SetSoundState(sid.."r",self.DoorLoopStates[id],0.8+self.DoorLoopStates[id]*0.2)
-
-        local n_l = "door"..i.."x"..k
-        local s_l = "salon_led"..i.."x"..k
-
-        if IsValid(self.ClientEnts[n_l]) then
-    		local textnumb = 2
-    		if n_l == "door0x1" or n_l == "door0x0" then
-        		textnumb = 1
-    		end
-
-    		local blink = CurTime()%0.5 > 0.25 and self.DoorStates[id]
-    		local isDoorOpen = state == 1
-			local doorIndex = i + 1
-            local alarmIndex = k==1 and doorIndex or doorIndex + 4
-			local alarmState = self:GetNW2String("DoorAnnounceState" .. alarmIndex, "Closed")
-			local isAlarmActive = alarmState == "Closing"
-
-			if not self:GetPackedBool(k==1 and "DoorLightL" or "DoorLightR") then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led.vtf")
-			elseif isAlarmActive and self:GetNW2Int("AOD"..(k==1 and 2*i+2 or 2*i+1), 0) >= 3 then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb, CurTime()%0.5 > 0.25 and "models/metrostroi_train/81-775/led_red.vtf" or "models/metrostroi_train/81-775/led.vtf")
-			elseif isDoorOpen and speed < 2.5 and not isAlarmActive and not self:GetNW2Bool("Depart123") then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led_green.vtf")
-    		elseif not self.DoorStates[id] and speed < 2.5 then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-
-    		elseif not self.DoorStates[id] and not self:GetNW2Bool("BNT:Depaeted") and speed < 2.5 then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-
-    		elseif blink then
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-
-    		else
-        		self.ClientEnts[n_l]:SetSubMaterial(textnumb,"models/metrostroi_train/81-775/led.vtf")
-    		end
+		if moving ~= self.DoorStates[id] then
+			if aodManual then
+			elseif moving then
+				if doorstate then self:PlayOnce(sid.."op","",1,1) end
+			elseif state >= 1 then
+				self:PlayOnce(sid.."o","",1,1)
+			elseif state <= 0 then
+				self:PlayOnce(sid.."c","",1,1)
+			end
+			self.DoorStates[id] = moving
 		end
 
-        self:Animate(n_l,state,0,1,0.9,false)
-
-        if IsValid(self.ClientEnts[s_l]) then
-    		local salon_textnumb = 0
-
-    		local blink = CurTime()%0.5 > 0.25 and self.DoorStates[id]
-    		local isDoorOpen = state == 1
-			local doorIndex = i + 1
-            local alarmIndex = k==1 and doorIndex or doorIndex + 4
-			local alarmState = self:GetNW2String("DoorAnnounceState" .. alarmIndex, "Closed")
-			local isAlarmActive = alarmState == "Closing"
-
-			if not self:GetPackedBool(k==1 and "DoorLightL" or "DoorLightR") then
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led.vtf")
-			elseif isAlarmActive and self:GetNW2Int("AOD"..(k==1 and 2*i+2 or 2*i+1), 0) >= 3 then
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb, CurTime()%0.5 > 0.25 and "models/metrostroi_train/81-775/led_red.vtf" or "models/metrostroi_train/81-775/led.vtf")
-			elseif isDoorOpen and speed < 2.5 and not isAlarmActive and not self:GetNW2Bool("Depart123") then
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led_green.vtf")
-    		elseif not self.DoorStates[id] and speed < 2.5 and self:GetNW2Bool("BNT:Depaeted") then
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-    		elseif self.DoorStates[id] then
-        		if blink then
-            		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-        		else
-            		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led.vtf")
-        		end
-    		elseif not self.DoorStates[id] and not self:GetNW2Bool("BNT:Depaeted") and speed < 2.5 then
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led_red.vtf")
-    		else
-        		self.ClientEnts[s_l]:SetSubMaterial(salon_textnumb,"models/metrostroi_train/81-775/led_white.vtf")
-            end
-        end
-			self:Animate(s_l,state,0,1,0.9,false)
+		if moving and not aodManual then
+			self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) + 2*self.DeltaTime,0,1)
+		else
+			self.DoorLoopStates[id] = math.Clamp((self.DoorLoopStates[id] or 0) - 6*self.DeltaTime,0,1)
 		end
+		self:SetSoundState(d.loop,self.DoorLoopStates[id],0.8+self.DoorLoopStates[id]*0.2)
+
+		local doorEnt,ledEnt = cents[sid],cents[d.led]
+		local doorValid,ledValid = IsValid(doorEnt),IsValid(ledEnt)
+		local doorMoving = self.DoorStates[id]
+		local blink = blinkOn and doorMoving
+		local isDoorOpen = state == 1
+		local isAlarmActive,lightOn = false,false
+		if doorValid or ledValid then
+			isAlarmActive = self:GetNW2String(d.announce, "Closed") == "Closing"
+			lightOn = self:GetPackedBool(d.light)
+		end
+
+		if doorValid then
+			local mat
+			if not lightOn then
+				mat = DOOR_LED_OFF
+			elseif isAlarmActive and aodManual then
+				mat = blinkOn and DOOR_LED_RED or DOOR_LED_OFF
+			elseif isDoorOpen and speed < 2.5 and not isAlarmActive and not depart123 then
+				mat = DOOR_LED_GREEN
+			elseif not doorMoving and speed < 2.5 then
+				mat = DOOR_LED_RED
+			elseif not doorMoving and not depaeted and speed < 2.5 then
+				mat = DOOR_LED_RED
+			elseif blink then
+				mat = DOOR_LED_RED
+			else
+				mat = DOOR_LED_OFF
+			end
+			SetLedMat(doorEnt,d.slot,mat)
+		end
+
+		self:Animate(sid,state,0,1,0.9,false)
+
+		if ledValid then
+			local mat
+			if not lightOn then
+				mat = DOOR_LED_OFF
+			elseif isAlarmActive and aodManual then
+				mat = blinkOn and DOOR_LED_RED or DOOR_LED_OFF
+			elseif isDoorOpen and speed < 2.5 and not isAlarmActive and not depart123 then
+				mat = DOOR_LED_GREEN
+			elseif not doorMoving and speed < 2.5 and depaeted then
+				mat = DOOR_LED_RED
+			elseif doorMoving then
+				mat = blink and DOOR_LED_RED or DOOR_LED_OFF
+			elseif not doorMoving and not depaeted and speed < 2.5 then
+				mat = DOOR_LED_RED
+			else
+				mat = DOOR_LED_WHITE
+			end
+			SetLedMat(ledEnt,0,mat)
+		end
+		self:Animate(d.led,state,0,1,0.9,false)
 	end
+end
 
 	self:SetSoundState("ring_ppz",self:GetPackedBool("BUKPRing",false) and 1.6 or 0,1)
 	self:SetSoundState("ring_call",self:GetPackedBool("CallRing",false) and 1 or 0,1)
@@ -3131,146 +3187,51 @@ function ENT:Draw()
 	self.BaseClass.Draw(self)
 end
 
+local RT_PANELS = {
+	{"MFDU","MFDU",399,300,754,566},
+	{"MosLogo","MosLogo",512,512,1024,1024},
+	{"ROUTER","ROUTER",250,36,500,72},
+	{"BNTN","BNTN",250,36,570*4,72*4},
+	{"BNTN2","BNTN2",250,36,570*4,72*4},
+	{"Speedometer","Speedometer",968,166,1940,330},
+	{"MVO","MVO",399,300,754,566},
+	{"IGLA","IGLA",256,92.5,512,185},
+	{"ASNPScreen","ASNP",256*1.36-15,64,460*1.36,115*1.36},
+	{"CIK","CIK",512,256,1000,475},
+	{"BNTS1","BNTScr",960,119,1920,238},
+	{"BNTS2","BNTScr2",960,119,1920,238},
+	{"BNTS3","BNTScr3",960,119,1920,238},
+	{"BNTS4","BNTScr4",960,119,1920,238},
+	{"BNTS5","BNTScr5",960,119,1920,238},
+	{"BNTS6","BNTScr6",960,119,1920,238},
+	{"BNTS7","BNTScr7",960,119,1920,238},
+	{"BNTS8","BNTScr8",960,119,1920,238},
+	{"ScreenOne","SCREEN",1080/2,676/2,1080,676},
+	{"ScreenTwo","SCREEN",1080/2,676/2,1080,676},
+	{"ScreenThree","SCREEN",1080/2,676/2,1080,676},
+	{"ScreenFour","SCREEN",1080/2,676/2,1080,676},
+	{"ScreenFive","SCREEN",1080/2,676/2,1080,676},
+	{"ScreenSix","SCREEN",1080/2,676/2,1080,676},
+}
+local rtPanel
+local rtMaterial
+local function DrawRTPanel()
+	surface.SetMaterial(rtMaterial)
+	surface.SetDrawColor(255,255,255)
+	surface.DrawTexturedRectRotated(rtPanel[3],rtPanel[4],rtPanel[5],rtPanel[6],0)
+end
+
 function ENT:DrawPost(special)
-	self.RTMaterial:SetTexture("$basetexture", self.MFDU)
-	self:DrawOnPanel("MFDU",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(399,300,754,566,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.MosLogo)
-	self:DrawOnPanel("MosLogo",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(512,512,1024,1024,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.ROUTER)
-	self:DrawOnPanel("ROUTER",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(250,36,500,72,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.BNTN)
-	self:DrawOnPanel("BNTN",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(250,36,570*4,72*4,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.BNTN2)
-	self:DrawOnPanel("BNTN2",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(250,36,570*4,72*4,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.Speedometer)
-	self:DrawOnPanel("Speedometer",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(968,166,1940,330,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture", self.MVO)
-	self:DrawOnPanel("MVO",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(399,300,754,566,0)
-	end)
-    self.RTMaterial:SetTexture("$basetexture", self.IGLA)
-    self:DrawOnPanel("IGLA",function(...)
-        surface.SetMaterial(self.RTMaterial)
-        surface.SetDrawColor(255,255,255)
-        surface.DrawTexturedRectRotated(256,92.5,512,185,0)
-    end)
-	self.RTMaterial:SetTexture("$basetexture",self.ASNP)
-    self:DrawOnPanel("ASNPScreen",function(...)
-        surface.SetMaterial(self.RTMaterial)
-        surface.SetDrawColor(255,255,255)
-        surface.DrawTexturedRectRotated(256*1.36-15,64,460*1.36,115*1.36,0)
-    end)
-	self.RTMaterial:SetTexture("$basetexture", self.CIK)
-	self:DrawOnPanel("CIK", function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255, 255, 255)
-		surface.DrawTexturedRectRotated(512, 256, 1000, 475, 0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr)
-	self:DrawOnPanel("BNTS1",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr2)
-	self:DrawOnPanel("BNTS2",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr3)
-	self:DrawOnPanel("BNTS3",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr4)
-	self:DrawOnPanel("BNTS4",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr5)
-	self:DrawOnPanel("BNTS5",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr6)
-	self:DrawOnPanel("BNTS6",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr7)
-	self:DrawOnPanel("BNTS7",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.BNTScr8)
-	self:DrawOnPanel("BNTS8",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(960,119,1920,238,0)
-	end)
-	self.RTMaterial:SetTexture("$basetexture",self.SCREEN)
-	self:DrawOnPanel("ScreenOne",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
-	self:DrawOnPanel("ScreenTwo",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
-	self:DrawOnPanel("ScreenThree",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
-	self:DrawOnPanel("ScreenFour",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
-	self:DrawOnPanel("ScreenFive",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
-	self:DrawOnPanel("ScreenSix",function(...)
-		surface.SetMaterial(self.RTMaterial)
-		surface.SetDrawColor(255,255,255)
-		surface.DrawTexturedRectRotated(1080/2,676/2,1080,676,0)
-	end)
+	local mat = self.RTMaterial
+	rtMaterial = mat
+	for i = 1, #RT_PANELS do
+		local panel = RT_PANELS[i]
+		if self:ShouldDrawPanel(panel[1]) then
+			rtPanel = panel
+			mat:SetTexture("$basetexture", self[panel[2]])
+			self:DrawOnPanel(panel[1],DrawRTPanel)
+		end
+	end
 	if not NewMetrostroi then
 		self:DrawSprites()
 	end
@@ -3392,10 +3353,15 @@ local function DrawRadioLED(ent, eye)
 	end
 end
 
+local bezelTrains, nextBezelScan = {}, 0
 hook.Add("PostDrawTranslucentRenderables", "775_BezelLEDs", function(depth, sky)
 	if sky or depth then return end
+	if RealTime() > nextBezelScan then
+		nextBezelScan = RealTime() + 1
+		bezelTrains = ents.FindByClass("gmod_subway_81-775")
+	end
 	local eye = EyePos()
-	for _, ent in ipairs(ents.FindByClass("gmod_subway_81-775")) do
+	for _, ent in ipairs(bezelTrains) do
 		if IsValid(ent) and ent:GetPos():DistToSqr(eye) < 600*600 then
 			local power = BortPower(ent)
 			for _, name in ipairs(LED_NAMES) do
@@ -3490,12 +3456,27 @@ for i = 1, #EMD_LIST do
 end
 
 local function EmdSmooth(x) x = math.Clamp(x, 0, 1) return x * x * (3 - 2 * x) end
+local EMD_NAMES = {}
+for i = 1, #EMD_LIST do
+	local n = i == 1 and "" or tostring(i)
+	EMD_NAMES[i] = {
+		aod = "AOD"..i,
+		cover = "emerdoor_cover"..n,
+		handle = "emerdoor_handle"..n,
+		seal = "emerdoor_seal"..n,
+		panelS = "AODs"..i,
+		panelC = "AODc"..i,
+		panelX = "AODx"..i,
+		panelH = "AODh"..i,
+		panelDoor = "AODDoor"..i,
+	}
+end
 function ENT:UpdateEmerDoor()
 	self.AODAnim = self.AODAnim or {}
 	local dt = FrameTime()
 	for i, d in ipairs(EMD_LIST) do
-		local n = i == 1 and "" or tostring(i)
-		local stage = self:GetNW2Int("AOD"..i, 0)
+		local names = EMD_NAMES[i]
+		local stage = self:GetNW2Int(names.aod, 0)
 		local an = self.AODAnim[i]
 		if not an then an = {cover = 0, handle = 0} self.AODAnim[i] = an end
 		local ct, ht = stage >= 2 and 1 or 0, stage >= 3 and 1 or 0
@@ -3506,8 +3487,9 @@ function ENT:UpdateEmerDoor()
 		local coverK    = EmdSmooth(an.cover)
 		local coverAng  = EMD_COVER_OPEN * coverK
 		local handleAng = -EMD_HANDLE_TURN * EmdSmooth(an.handle)
-		local cover, handle = self.ClientEnts["emerdoor_cover"..n], self.ClientEnts["emerdoor_handle"..n]
-		if IsValid(cover) then
+		local cover, handle = self.ClientEnts[names.cover], self.ClientEnts[names.handle]
+		if IsValid(cover) and (an.coverEnt ~= cover or an.coverK ~= coverK) then
+			an.coverEnt, an.coverK = cover, coverK
 			if cover:GetParent() ~= self then cover:SetParent(self) cover:SetRenderBounds(Vector(-80,-80,-80), Vector(80,80,80)) end
 			local lp, la = LocalToWorld(EMD_HINGE - EMD_PIVOT, Angle(0, 0, coverAng), EMD_PIVOT + Vector(0, 0, EMD_COVER_LIFT * coverK), angle_zero)
 			if EMD_COVER_MODE == "swing" then
@@ -3522,18 +3504,19 @@ function ENT:UpdateEmerDoor()
 			cover:SetLocalPos(p)
 			cover:SetLocalAngles(a)
 		end
-		if IsValid(handle) then
+		if IsValid(handle) and (an.handleEnt ~= handle or an.handleAng ~= handleAng) then
+			an.handleEnt, an.handleAng = handle, handleAng
 			if handle:GetParent() ~= self then handle:SetParent(self) end
 			local p, a = EmdToTrain(d, vector_origin, Angle(handleAng, 0, 0))
 			handle:SetLocalPos(p)
 			handle:SetLocalAngles(a)
 		end
-		self:ShowHide("emerdoor_seal"..n, stage < 1)
-		self:HidePanel("AODs"..i, stage ~= 0)
-		self:HidePanel("AODc"..i, stage ~= 1)
-		self:HidePanel("AODx"..i, stage ~= 2)
-		self:HidePanel("AODh"..i, stage ~= 3)
-		self:HidePanel("AODDoor"..i, stage < 3)
+		self:ShowHide(names.seal, stage < 1)
+		self:HidePanel(names.panelS, stage ~= 0)
+		self:HidePanel(names.panelC, stage ~= 1)
+		self:HidePanel(names.panelX, stage ~= 2)
+		self:HidePanel(names.panelH, stage ~= 3)
+		self:HidePanel(names.panelDoor, stage < 3)
 	end
 end
 

@@ -200,7 +200,7 @@ function TRAIN_SYSTEM:Think(dT)
 	local AKB = C(Ubat > 61)
 	local AKBLive = C(Ubat > 49)
 	self.AKB = AKBLive
-	local BSDead = Ubat <= 49 and self.PSN <= 550
+	local BSDead = (Ubat <= 49 and self.PSN <= 550) or Train["95F2"].Value < 0.5
 
 	local RV = Train.RV
 
@@ -226,7 +226,7 @@ function TRAIN_SYSTEM:Think(dT)
 		Train:WriteTrainWire(14,S["RU"]*C(RV.KRRPosition~=0))
 
 		local ab = Train.ATSBlock.Value
-		local function arsAllow(i,atc) if ab == i or ab == 3 then return 1 end return math.min(1,atc.Drive) end
+		local function arsAllow(i,atc) if ab == 3 - i or ab == 3 then return 1 end return math.min(1,atc.Drive) end
 		local DoorsOK = math.max(C(Train:ReadTrainWire(72) <= 0), Train.DoorBlock.Value)
 		local EmerXPower = S["RU"]*C(RV.KRRPosition~=0)*math.min(arsAllow(1,Train.ATC1),arsAllow(2,Train.ATC2))*DoorsOK
 
@@ -240,7 +240,7 @@ function TRAIN_SYSTEM:Think(dT)
 
 		Panel.HVoltage = W[22]
 		Panel.ChargeAKBl = BS*Train.ChargeAKB.Value
-		Train:WriteTrainWire(21,Train.ChargeAKB.Value)
+		Train:WriteTrainWire(21,Train.ChargeAKB.Value*Train.SF1.Value)
 
 		Train:WriteTrainWire(23,W[22]*Train.EmergencyCompressor.Value)
 
@@ -269,7 +269,7 @@ function TRAIN_SYSTEM:Think(dT)
 		self.PrevAODL, self.PrevAODR = aodL, aodR
 		Train:WriteTrainWire(61,DC*(Train.BKPU.DoorsSelectRight or 0)*(1-aodR)+EDP*aodR)
 		Train:WriteTrainWire(62,DC*(Train.BKPU.DoorsOpenRight or 0)*(1-aodR)+EDP*aodR)
-		Train:WriteTrainWire(63,DC*(Train.BKPU.DoorsClose or 0)*(1-aodL)*(1-aodR)+S["RU"]*KRUon*C(self.AODClose == true))
+		Train:WriteTrainWire(63,DC*(Train.BKPU.DoorsClose or 0)*(1-aodL)*(1-aodR)+S["RU"]*KRUon*math.max(C(self.AODClose == true),1-Train.SF13.Value))
 		Train:WriteTrainWire(64,S["RV"]*(Train.BKPU.V0 or 0)*C(RV.KRRPosition==0)+EDP)
 		Train:WriteTrainWire(65,DC*(Train.BKPU.DoorsSelectLeft or 0)*(1-aodL)+EDP*aodL)
 		Train:WriteTrainWire(66,DC*(Train.BKPU.DoorsOpenLeft or 0)*(1-aodL)+EDP*aodL)
@@ -310,7 +310,7 @@ function TRAIN_SYSTEM:Think(dT)
 
 		local command = 0
         if self.AsyncEmer > 0 then
-            command = self.AsyncEmer*math.min(1,W[19]*0.5+W[18])
+            command = self.AsyncEmer*math.min(1,W[19]*0.2+W[18])
             if Train:ReadTrainWire(67) > 0 or Train:ReadTrainWire(68) <= 0 or not IsOn(Train.Pneumatic.ReserveReady) then command = 0 end
             Async:TriggerInput("Drive",C(command>0))
             Async:TriggerInput("Brake",0)

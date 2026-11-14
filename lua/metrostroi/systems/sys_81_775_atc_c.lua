@@ -57,7 +57,7 @@ function TRAIN_SYSTEM:Think(dT)
 	local Power = (Train.Electric.Power*Train["SF"..(self.Set==1 and 5 or 6)].Value)>0
 
 	local ATCB = Train.ATSBlock.Value
-	local Active = Power and ((self.Set==1 and ATCB ~= 1) or (self.Set==2 and ATCB ~= 2)) and ATCB ~= 3
+	local Active = Power and ((self.Set==1 and ATCB ~= 2) or (self.Set==2 and ATCB ~= 1)) and ATCB ~= 3
 
 	local UOS = (ATCB == 3) and (Train.RV.KROPosition ~= 0 or Train.RV.KRRPosition ~= 0)
 

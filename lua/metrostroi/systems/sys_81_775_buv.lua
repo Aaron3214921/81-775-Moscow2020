@@ -1,8 +1,11 @@
 Metrostroi.DefineSystem("81_775_BUV")
 
 local BV_TRIP_CURRENT = 1500
-local BV_TRIP_VOLTAGE = 1000
+local BV_TRIP_VOLTAGE = 975
 local BV_TRIP_ON_SAG  = false
+local BV_TRIP_WINDOW = 30
+local BV_MAX_RECLOSE = 3
+local BV_MAX_ATTEMPTS = 3
 local STORAGE_MAX_TIME = 300
 TRAIN_SYSTEM.DontAccelerateSimulation = true
 
@@ -75,7 +78,7 @@ end
 
 function TRAIN_SYSTEM:Outputs()
 	return {
-		"State", "AKBVoltage", "BAPVoltage", "Voltage", "PowerOff", "PSN", "CompressorsCanWork","CompressorSignal","BVSignal",
+		"State", "AKBVoltage", "Voltage", "PowerOff", "PSN", "CompressorsCanWork","CompressorSignal","BVSignal",
 		"Drive","Brake","Strength","KN","DisableLights","DisablePSN","DisableMK","DisableBV","DisableTP","EnableLights","EnableMK",
 		"DF","DR","Orientation","StorageVoltage",
 	}
@@ -143,13 +146,6 @@ function TRAIN_SYSTEM:GetAKBVoltage(dT)
 	return new
 end
 
-function TRAIN_SYSTEM:GetBAPVoltage()
-
-	local voltage = 65
-
-	return voltage
-end
-
 local COND_SET = { salon = {leto = 23, zima = 20}, cab = {leto = 23, zima = 22} }
 local COND_RATE = 0.06
 local COND_DRIFT = 900
@@ -214,7 +210,6 @@ function TRAIN_SYSTEM:Think(dT)
 	self.AKBDischarge = 0
 
 	self.AKBVoltage = self:GetAKBVoltage(dT)
-	self.BAPVoltage = self:GetBAPVoltage()
 
 	self.Voltage = self.AKBVoltage
 
@@ -391,7 +386,7 @@ function TRAIN_SYSTEM:Think(dT)
 		self:CState("PVU2", self.DisableMK==1)
 		self:CState("PVU3", self.DisableLights==1)
 		self:CState("PVU4", self.DisablePVU4==1)
-		self:CState("TRDown", self.DisableTR==1)
+		self:CState("TRDown", self.Pant == true)
 		self:CState("PVU5", self.DisableTP==1)
 		self:CState("PVU6", self.DisablePSN==1)
 		self:CState("PVU7", self.DisableBV==1)
@@ -442,8 +437,11 @@ function TRAIN_SYSTEM:Think(dT)
 	self.DisablePSN = self:Get("PVU6") and 1 or 0
 	self.DisablePVU4 = self:Get("PVU4") and 1 or 0
 	self.DisableTR = (self:Get("DisablePant") or self:Get("PVU4")) and 1 or 0
-	if self.State and self.CurrentBUP and self.BUKPWork ~= false and self.Commands[self.CurrentBUP] and self.Commands[self.CurrentBUP]["DisablePant"] ~= nil and (not Train["21F1"] or Train["21F1"].Value > 0.5) then
-		self.Pant = self.DisableTR == 1
+	if self.CurrentBUP and self.Commands[self.CurrentBUP] and self.Commands[self.CurrentBUP]["DisablePant"] ~= nil and Train["21F1"].Value > 0.5 then
+		local want = self.DisableTR == 1
+		if not (want and not self.Pant and Train.Pneumatic.TrainLinePressure < 3) then
+			self.Pant = want
+		end
 	end
 
 	if Train.BUTP then
@@ -482,96 +480,67 @@ function TRAIN_SYSTEM:Think(dT)
 	end
 
 	if Train.BUTP then
-		local butpPower = Electric.KTI > 0 and self.Voltage > 60 and Train["23F4"].Value > 0
+		local now = CurTime()
+		local ctrlPower = self.State and Train["23F4"].Value > 0 and self.Voltage > 54
 		local overCurrent = math.abs(Train.BUTP.Current) > BV_TRIP_CURRENT
 		local overVoltage = Train.Electric.Main750V > BV_TRIP_VOLTAGE
 		local undervoltageWithCurrent = BV_TRIP_ON_SAG and Train.Electric.Main750V > 20 and Train.Electric.Main750V < 530 and Train.BUTP.Current > 100
 		local shutdownConditions = overCurrent or overVoltage or undervoltageWithCurrent
-		local bv_enable = self:Get("BVEnable")
-		local bv_disable = self:Get("BVDisable")
+		local driverOff = self:Get("BVDisable") == true and Train:ReadTrainWire(14) <= 0
+		local resetCount = self:Get("BVEnable")
+		if type(resetCount) == "number" then
+			if type(self.BVResetSeen) == "number" and resetCount > self.BVResetSeen then
+				self.BVprotectiveShutdown = 0
+				self.BVattempt2Enable = 0
+				self.BVdisableByOwnProtection = false
+				self.BVTrips = {}
+			end
+			self.BVResetSeen = resetCount
+		end
+		self.BVTrips = self.BVTrips or {}
+		for k = #self.BVTrips, 1, -1 do
+			if now - self.BVTrips[k] > BV_TRIP_WINDOW then table.remove(self.BVTrips, k) end
+		end
 		local BV = Train.BV.Value > 0.5
-		if BV and self.DisableBV==1 then
-			Train.BV:TriggerInput("Open", 1)
-		end
-		if self.BVTimer and (not bv_disable or bv_enable) then
-			if not self.BVTimer1 then
-				self.BVTimer1 = CurTime()+(math.random(70,80)/10)
-			elseif self.BVTimer1 <= CurTime() then
-				self.BVTimer1 = nil
-				Train.BV:TriggerInput("Close", 1)
-			end
-		end
-
-		if BV then
-
-			if self.BVA2ETimer and self.BVA2ETimer < CurTime() then
-				self.BVA2ETimer = nil
-				self.BVprotectiveShutdown = 0
-				self.BVattempt2Enable = 0
-				self.BVdisableByOwnProtection = false
-			end
-
-			if shutdownConditions then
-				Train.BV:TriggerInput("Open", 1)
-				self.BVA2ETimer = nil
-				self.BVdisableByOwnProtection = true
-			end
-			if bv_disable then
-				if not self.BVTimer then
-					self.BVTimer = CurTime()+math.random(10,13)/10
-				elseif self.BVTimer <= CurTime() then
-					Train.BV:TriggerInput("Open", 1)
-					self.BVTimer = nil
-					self.BVprotectiveShutdown = 0
-					self.BVattempt2Enable = 0
-					self.BVdisableByOwnProtection = false
-				end
-			end
-		else
-			if self.BVTimer and not bv_enable then
-				self.BVTimer = nil
-			end
-			if bv_disable then
-				self.BVprotectiveShutdown = 0
-				self.BVattempt2Enable = 0
-				self.BVdisableByOwnProtection = false
-			end
-			if not self.BVdisableByOwnProtection and bv_enable and self.Voltage > 62 and self.DisableBV==0 then
-				if not shutdownConditions then
-					if not self.BVTimer then
-						self.BVTimer = CurTime()+math.random(25,27)
-					elseif self.BVTimer <= CurTime() then
-						Train.BV:TriggerInput("Close", 1)
-						self.BVTimer = nil
-					end
-				else
-					self.BVdisableByOwnProtection = true
-				end
-			elseif self.Voltage > 62 and self.BVdisableByOwnProtection then
-				if self.BVattempt2Enable < 3 then
-					if not self.BVBackUpTimer then
-						self.BVBackUpTimer = CurTime()+(self.BVattempt2Enable==0 and math.random(45,55)/10 or self.BVattempt2Enable == 1 and math.random(25,30) or math.random(55,60))
-					end
-					if self.BVBackUpTimer and CurTime() > self.BVBackUpTimer then
-						if not shutdownConditions then
-							Train.BV:TriggerInput("Close", 1)
-							self.BVA2ETimer = CurTime()+10
-							self.BVattempt2Enable = overVoltage and 0 or self.BVattempt2Enable + 1
-						else
-							self.BVattempt2Enable = overVoltage and 0 or self.BVattempt2Enable + 1
-						end
-						self.BVBackUpTimer = nil
-					end
-				else
-					self.BVprotectiveShutdown = 1
-				end
-			end
-		end
-		if not butpPower and self.State then
-			self.BVdisableByOwnProtection = false
+		if not ctrlPower then
+			if BV then Train.BV:TriggerInput("Open", 1) end
+			self.BVCloseTimer = nil
 			self.BVprotectiveShutdown = 0
 			self.BVattempt2Enable = 0
+			self.BVdisableByOwnProtection = false
+			self.BVTrips = {}
+		elseif BV then
+			self.BVCloseTimer = nil
+			self.BVattempt2Enable = 0
+			if self.DisableBV == 1 or driverOff then
+				Train.BV:TriggerInput("Open", 1)
+			elseif shutdownConditions then
+				Train.BV:TriggerInput("Open", 1)
+				self.BVdisableByOwnProtection = true
+				table.insert(self.BVTrips, now)
+				if #self.BVTrips > BV_MAX_RECLOSE then self.BVprotectiveShutdown = 1 end
+			end
+		else
+			local want = self.DisableBV == 0 and not driverOff and self.BVprotectiveShutdown == 0
+			if want then
+				if not self.BVCloseTimer then
+					local retry = self.BVdisableByOwnProtection or self.BVattempt2Enable > 0
+					self.BVCloseTimer = now + (retry and Rand(4.5,5.5) or Rand(5,10))
+				elseif now >= self.BVCloseTimer then
+					self.BVCloseTimer = nil
+					if shutdownConditions then
+						self.BVattempt2Enable = self.BVattempt2Enable + 1
+						if self.BVattempt2Enable >= BV_MAX_ATTEMPTS then self.BVprotectiveShutdown = 1 end
+					else
+						Train.BV:TriggerInput("Close", 1)
+						self.BVdisableByOwnProtection = false
+					end
+				end
+			else
+				self.BVCloseTimer = nil
+			end
 		end
+		self:CState("BVBlocked", self.BVprotectiveShutdown == 1)
 	end
 
 	self.PSN = self.DisablePSN == 0

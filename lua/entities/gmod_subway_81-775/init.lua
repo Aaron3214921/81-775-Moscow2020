@@ -36,7 +36,6 @@ ENT.SyncTable = {
 
 	"EmergencyBrakeValve",
 
-	"StartBAP", "StartBAPk", "TestBAP",
 	"Stopkran",
 
 	"ChargeAKB", "EnableBS", "DisableBS", "ALSDecoder", "_Rezerv",
@@ -578,7 +577,7 @@ function ENT:Think()
 	self:SetPackedBool("ChargeAKBLamp", Panel.ChargeAKBl)
 
 	self:SetPackedBool("HVoltage", Panel.HVoltage)
-	self:SetPackedBool("DoorsClosed", MFDU.DoorsClosedMFDU == true and (self.Electric.Power * self.SF6.Value) > 0.5)
+	self:SetPackedBool("DoorsClosed", MFDU.DoorsClosedMFDU == true and (self.Electric.Power * self.SF5.Value) > 0.5)
 
 	self:SetPackedBool("K40_cap",self.K40_cap)
 	if (self.K40.Value == 0 or self.K31.Value == 0) and not self.K40_cap then

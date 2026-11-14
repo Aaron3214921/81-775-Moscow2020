@@ -310,7 +310,7 @@ function TRAIN_SYSTEM:Touch(value, x, y)
 				if BKPU.Active and self.Train.RV.KRRPosition == 0 then
 					if BKPU.SlopeEnabled then
 						BKPU.SlopeEnabled = false
-					elseif math.max(self.Train.ATC1.Speed or 0, self.Train.Speed or 0) <= 2 then
+					elseif math.max(self.Train.ATC1.Speed or 0, self.Train.Speed or 0) <= 2 and (self.Train.Controller.Controller or 0) <= 0 then
 						BKPU.SlopeEnabled = true
 					end
 				end
@@ -320,7 +320,11 @@ function TRAIN_SYSTEM:Touch(value, x, y)
 				self.Train:SetNW2Bool("MFDU:Recup", self.RecupEnabled)
 			end
 			if self.Window == 31 and self.StorageAvail == true and inrange(x, y, 598, 166, 730, 232) then
-				self.StorageEnabled = not self.StorageEnabled
+				if self.StorageEnabled then
+					self.StorageEnabled = false
+				elseif self.Train.ChargeAKB.Value > 0.5 and self.Train.BKPU.BVOff == true then
+					self.StorageEnabled = true
+				end
 				self.Train:SetNW2Bool("MFDU:Storage", self.StorageEnabled)
 			end
 			if self.Window == 61 and inrange(x, y, 280, 362, 565, 400) then
@@ -602,7 +606,7 @@ function TRAIN_SYSTEM:Think(dT)
     local trains = BKPU and BKPU.Trains or {}
     local wag_num = #trains
 
-    local MFDU_Power = (Train.Electric and Train.Electric.Power or 0) * (Train.SF6 and Train.SF6.Value or 0) > 0.5
+    local MFDU_Power = (Train.Electric and Train.Electric.Power or 0) * (Train.SF5 and Train.SF5.Value or 0) > 0.5
     local RR = (Train.RV and (Train.RV.KROPosition ~= 0 or Train.RV.KRRPosition ~= 0)) or false
 
     if not MFDU_Power and self.State ~= 0 then
@@ -705,10 +709,10 @@ function TRAIN_SYSTEM:Think(dT)
 				BV = BV or (trains[i]["WagType"] or 1)<2 and not trains[i]["BVState"] or trains[i].BUVNotWork
 				PVU = PVU or trains[i]["PVU1"] or trains[i]["PVU2"] or trains[i]["PVU3"] or trains[i]["PVU4"] or trains[i]["PVU5"] or trains[i]["PVU6"] or trains[i]["PVU7"]
 			end
-			Train:SetNW2Int('MFDU:0:ATC1',Train.ATC1.Power and (Train.ATC1.Active and ((Train.ATC1.Brake>0 or (Train.ATC1.PN2 > 0.5)) and 1 or (Train.ATC1.Drive>0 and 2 or 3)) or ((Train.ATSBlock.Value == 1 or Train.ATSBlock.Value == 3) and 0 or 4)) or 0)
-			Train:SetNW2Int('MFDU:0:ATC2',Train.ATC2.Power and (Train.ATC2.Active and ((Train.ATC2.Brake>0 or (Train.ATC2.PN2 > 0.5)) and 1 or (Train.ATC2.Drive>0 and 2 or 3)) or ((Train.ATSBlock.Value == 2 or Train.ATSBlock.Value == 3) and 0 or 4)) or 0)
+			Train:SetNW2Int('MFDU:0:ATC1',Train.ATC1.Power and (Train.ATC1.Active and ((Train.ATC1.Brake>0 or (Train.ATC1.PN2 > 0.5)) and 1 or (Train.ATC1.Drive>0 and 2 or 3)) or ((Train.ATSBlock.Value == 2 or Train.ATSBlock.Value == 3) and 0 or 4)) or 0)
+			Train:SetNW2Int('MFDU:0:ATC2',Train.ATC2.Power and (Train.ATC2.Active and ((Train.ATC2.Brake>0 or (Train.ATC2.PN2 > 0.5)) and 1 or (Train.ATC2.Drive>0 and 2 or 3)) or ((Train.ATSBlock.Value == 1 or Train.ATSBlock.Value == 3) and 0 or 4)) or 0)
 
-			Train:SetNW2Int('MFDU:0:RVTB',(Train.ATC1.RVTB == 1 and not (Train.BTBU and (Train.BTBU.VTBApplied or Train.BTBU.RVTBCmd))) and 2 or 1)
+			Train:SetNW2Int('MFDU:0:RVTB',Train.ATSBlock.Value == 3 and 0 or (Train.ATC1.RVTB == 1 and not (Train.BTBU and (Train.BTBU.VTBApplied or Train.BTBU.RVTBCmd))) and 2 or 1)
 
 			do
 				self.CondSince = self.CondSince or {}
@@ -734,8 +738,8 @@ function TRAIN_SYSTEM:Think(dT)
 					return a and a.Power and a.Active and not ((a.Brake or 0) > 0 or (a.PN2 or 0) > 0.5) and (a.Drive or 0) == 0 or false
 				end
 				local atsBlk = Train.ATSBlock and Train.ATSBlock.Value or 0
-				local ok1 = Train.ATC1.Power == true and atsBlk ~= 1 and atsBlk ~= 3
-				local ok2 = Train.ATC2.Power == true and atsBlk ~= 2 and atsBlk ~= 3
+				local ok1 = Train.ATC1.Power == true and atsBlk ~= 2 and atsBlk ~= 3
+				local ok2 = Train.ATC2.Power == true and atsBlk ~= 1 and atsBlk ~= 3
 				local arsBoth = Hold("arsB", atsBlk ~= 3 and not ok1 and not ok2, 2)
 				local ars1    = Hold("ars1", atsBlk == 0 and not Train.ATC1.Power and ok2, 2)
 				local ars2    = Hold("ars2", atsBlk == 0 and not Train.ATC2.Power and ok1, 2)
@@ -758,18 +762,18 @@ function TRAIN_SYSTEM:Think(dT)
 				local Prost = Train.Prost_Kos
 				local MsgDefs = {
 					{1, "Сбой КМ.",                 function(t,i) return i == 1 and BKPU.KMFault == true end, nil},
-					{1, "Нет связи с БУВ",         function(t) return t.BUVNotWork end,                          "на %d вагоне", nil, "Отсутствует связь с БУВ"},
+					{1, "Нет связи с БУВ-С",       function(t) return t.BUVNotWork end,                          "на %d вагоне", nil, "Отсутствует связь с БУВ"},
 					{1, "Вагон не ориентирован",   function(t,i) return Hold("noor"..i, not t.BUVNotWork and t.WagNOrientated == true, 3) end, nil, nil, "Вагоны не ориентированы", "Вагон %d не ориентирован"},
 					{1, "ДС не в норме",            function(t) return not t.BUVNotWork and t.EncoderOk == false end, "на %d вагоне"},
-					{1, "Отказ АРС. Переведи блокиратор в положение АТС1.", function(t,i) return i == 1 and ars1 end, nil},
-					{1, "Отказ АРС. Переведи блокиратор в положение АТС2.", function(t,i) return i == 1 and ars2 end, nil},
-					{1, "Отказ АРС. Перейди на УОС.", function(t,i) return i == 1 and arsBoth end, nil},
-					{1, "Запрет ТР АРС.",           function(t,i) return i == 1 and (ArsYellow(Train.ATC1) or ArsYellow(Train.ATC2)) end, nil},
+					{1, "Отказ АРС. Перейди в АТС-2.", function(t,i) return i == 1 and ars1 end, nil},
+					{1, "Отказ АРС. Перейди в АТС-1.", function(t,i) return i == 1 and ars2 end, nil},
+					{1, "Отказ АРС. Перейди в УОС.", function(t,i) return i == 1 and arsBoth end, nil},
+					{1, "Запрет ТР от АРС.",         function(t,i) return i == 1 and (ArsYellow(Train.ATC1) or ArsYellow(Train.ATC2)) end, nil},
 					{1, "Экстренное торможение",   function(t) return not t.BUVNotWork and (t.BCPressure or 0) >= (t.Pn3Pressure or 2.2) - 0.15 end, nil},
 					{1, "Стояночный тормоз прижат", function(t) return t.ParkingBrakeApply end,                  "на %d вагоне"},
 					{1, "Двери не закрыты",         function(t)
 						if t.BUVNotWork then return false end
-						if t.DoorsClosed == false then return true end
+						if t.DoorsClosed == false and Train:ReadTrainWire(69) <= 0 then return true end
 						for d = 1, 8 do if t["Door"..d.."Closed"] == false then return true end end
 						return false
 					end, "на %d вагоне"},
@@ -780,13 +784,15 @@ function TRAIN_SYSTEM:Think(dT)
 					{1, "Сработал срывной клапан в хвостовой кабине", function(t,i,n) return n > 1 and i == n and t.SKTripped == true end, nil},
 					{1, "Низкое давление в ТМ.",    function(t) return (t.BLPressure or 9) < 2.65 end,            nil, 2},
 					{1, "Низкое давление в НМ.",    function(t) return (t.TLPressure or 9) < 6 end,               nil, 2},
-					{1, "Проверь автомат групп БУФТ (РВТБ, КМ, БТБУ, СТ).", function(t,i) return i == 1 and t.SF08 == 1 end, nil},
+					{1, "Проверь автомат группы БУФТ (РВТБ, КМ, БТБУ, СТ).", function(t,i) return i == 1 and t.SF08 == 1 end, nil},
+					{1, "Нет контроля дверей.",     function(t,i) return i == 1 and Train:ReadTrainWire(69) > 0 end, nil},
+					{2, "Включен режим УОС.",       function(t,i) return i == 1 and Train.ATSBlock ~= nil and Train.ATSBlock.Value == 3 end, nil},
 					{1, "Блокировка ВТБ включена. Торможение только от крана машиниста", function(t,i) return i == 1 and Train.BTBU and Train.BTBU.Blocked == true end, nil},
 					{2, "Кузов не в норме",         function(t) return not t.BUVNotWork and t.HullOk == false end, "на %d вагоне"},
 					{2, "ТКПР отжаты",              function(t) return not t.BUVNotWork and t.TRDown == true end, "на %d вагоне"},
 					{2, "Правые двери заблокированы.", function(t,i) return i == 1 and BKPU.DoorBlockedRight == true end, nil},
 					{2, "Левые двери заблокированы.",  function(t,i) return i == 1 and BKPU.DoorBlockedLeft == true end,  nil},
-					{2, "Открыта хвостовая кабина.", function(t,i,n) return n > 1 and i == n and not t.BUVNotWork and (t.DoorCabLeft == true or t.DoorCabRight == true or t.DoorCabPass == true) end, nil},
+					{2, "Открыта кабина ХВ.", function(t,i,n) return n > 1 and i == n and not t.BUVNotWork and (t.DoorCabLeft == true or t.DoorCabRight == true or t.DoorCabPass == true) end, nil},
 					{2, "Торможение КОС.",          function(t,i) return i == 1 and Prost and Prost.Kos and Prost.CommandKos == true end, nil},
 					{2, "БВ отключен",              function(t) return (t.WagType or 1) < 2 and not t.BVState end, "на %d вагоне"},
 					{2, "Напряжение КС.",           function(t,i) return i == 1 and noKS end, nil},

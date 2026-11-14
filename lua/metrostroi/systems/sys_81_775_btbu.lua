@@ -179,7 +179,7 @@ function TRAIN_SYSTEM:Think(dT)
 				local pedal = Train.PB.Value > 0.5 or Train.Attention.Value > 0.5
 				return (pedal and not atc.UOSBraking) or not relevant
 			end
-			if ATSB == i then return true end
+			if ATSB == 3 - i then return true end
 			if sf.Value <= 0 then return false end
 			if atc.OverLatch then return false end
 			return atc.RVTB ~= 0 or not relevant
@@ -226,7 +226,13 @@ function TRAIN_SYSTEM:Think(dT)
 		local moving = speed >= self.MovingSpeed
 		self.ReserveLeak = (reserve and not (vigilance and (hod or moving))) and true or false
 		Train:WriteTrainWire(W_RESLEAK, self.ReserveLeak and 1 or 0)
-		Train:WriteTrainWire(W_RESCHG, (Train.BKPU.ReserveCharged == true) and 1 or 0)
+		local resChg
+		if Train.BKPU.Prepared == true and Train.BKPU.Active then
+			resChg = Train.BKPU.ReserveCharged == true
+		else
+			resChg = Pneu.ReserveReady == true
+		end
+		Train:WriteTrainWire(W_RESCHG, resChg and 1 or 0)
 
 		Train:WriteTrainWire(W_ARMED,  cabKey and 1 or 0)
 		Train:WriteTrainWire(W_INIT,   (cabKey and ms >= 4) and 1 or 0)
